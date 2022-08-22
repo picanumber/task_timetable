@@ -9,7 +9,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-#include "exampleConfig.h"
+#include "configurations.h"
 #include "scheduler.h"
 
 /*
