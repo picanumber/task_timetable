@@ -10,26 +10,28 @@
 #include <stdlib.h>
 
 #include "exampleConfig.h"
-#include "example.h"
+#include "scheduler.h"
 
 /*
  * Simple main program that demontrates how access
  * CMake definitions (here the version number) from source code.
  */
-int main() {
-  std::cout << "C++ Boiler Plate v"
-            << PROJECT_VERSION_MAJOR
-            << "."
-            << PROJECT_VERSION_MINOR
-            << "."
-            << PROJECT_VERSION_PATCH
-            << "."
-            << PROJECT_VERSION_TWEAK
-            << std::endl;
-  std::system("cat ../LICENSE");
+int main()
+{
+    std::cout << "Hello from main\n";
 
-  // Bring in the dummy class from the example source,
-  // just to show that it is accessible from main.cpp.
-  Dummy d = Dummy();
-  return d.doSomething() ? 0 : -1;
+    cls::CallScheduler sched;
+
+    sched
+        .add(
+            [] {
+                std::cout << "Task was done\n";
+                return cls::Result::Finished;
+            },
+            std::chrono::milliseconds(500))
+        ->detach();
+
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
+    return 0;
 }
