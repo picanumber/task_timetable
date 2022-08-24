@@ -1,11 +1,3 @@
-// Executables must have the following defined if the library contains
-// doctest definitions. For builds with this disabled, e.g. code shipped to
-// users, this can be left out.
-#ifdef ENABLE_DOCTEST_IN_LIBRARY
-#define DOCTEST_CONFIG_IMPLEMENT
-#include "doctest/doctest.h"
-#endif
-
 #include <iostream>
 #include <stdlib.h>
 
@@ -20,16 +12,25 @@ int main()
 {
     std::cout << "Hello from main\n";
 
-    cls::CallScheduler sched;
+    ttt::CallScheduler sched;
 
     sched
         .add(
-            [] {
-                std::cout << "Task was done\n";
-                return cls::Result::Finished;
+            [value = 1, tp = std::chrono::steady_clock::now()]() mutable {
+                auto start = std::chrono::steady_clock::now();
+
+                auto delta =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        start - tp);
+                tp = start;
+
+                std::cout << "Execution after " << delta.count() << "ms\n";
+
+                std::cout << value++ << ".Task was done\n";
+                return ttt::Result::Repeat;
             },
             std::chrono::milliseconds(500))
-        ->detach();
+        .detach();
 
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
