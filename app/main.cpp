@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include <stdlib.h>
 
@@ -12,7 +13,7 @@ int main()
 {
     std::cout << "Hello from main\n";
 
-    ttt::CallScheduler sched;
+    ttt::CallScheduler sched(false);
 
     sched
         .add(
@@ -20,13 +21,12 @@ int main()
                 auto start = std::chrono::steady_clock::now();
 
                 auto delta =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::duration_cast<std::chrono::microseconds>(
                         start - tp);
                 tp = start;
 
-                std::cout << "Execution after " << delta.count() << "ms\n";
-
-                std::cout << value++ << ".Task was done\n";
+                std::cout << value++ << ".Execution after " << delta.count()
+                          << "us\n";
                 return ttt::Result::Repeat;
             },
             std::chrono::milliseconds(500))

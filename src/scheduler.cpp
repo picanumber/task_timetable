@@ -1,4 +1,5 @@
 #include "scheduler.h"
+#include <chrono>
 
 namespace ttt
 {
@@ -79,7 +80,8 @@ void CallToken::detach()
     _token.reset();
 }
 
-CallScheduler::CallScheduler()
+CallScheduler::CallScheduler(bool countOnTaskStart)
+    : _countOnTaskStart(countOnTaskStart)
 {
     _scheduler.consumer = std::thread(&CallScheduler::run, this);
 }
@@ -164,7 +166,11 @@ void CallScheduler::TaskRunner::operator()()
 
     if (Result::Repeat == outcome)
     {
-        _node.key() += task.interval;
+        _node.key() =
+            (_parent._countOnTaskStart ? _node.key()
+                                       : std::chrono::steady_clock::now()) +
+            task.interval;
+
         {
             std::lock_guard lock(_parent._scheduler.mtx);
             _parent._tasks.insert(std::move(_node));

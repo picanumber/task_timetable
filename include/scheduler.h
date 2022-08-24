@@ -70,11 +70,12 @@ class CallScheduler
     };
 
   public:
-    CallScheduler();
+    explicit CallScheduler(bool countIntervalOnTaskStart = true);
     ~CallScheduler();
 
-    CallToken add(std::function<Result()> call,
-                  std::chrono::microseconds interval, bool immediate = false);
+    [[nodiscard]] CallToken add(std::function<Result()> call,
+                                std::chrono::microseconds interval,
+                                bool immediate = false);
 
   private:
     // Collection of active tasks.
@@ -89,6 +90,9 @@ class CallScheduler
         mutable std::condition_variable cv;
         std::atomic_bool stop{false};
     } _scheduler;
+
+    // Explanation.
+    bool _countOnTaskStart;
 
   private:
     void run();
