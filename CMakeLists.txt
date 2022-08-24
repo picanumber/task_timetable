@@ -48,7 +48,6 @@ find_package(Threads REQUIRED)
 
 SET(USED_LIBS
     Threads::Threads
-    doctest
 )
 
 # Compile all sources into a library.

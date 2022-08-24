@@ -90,7 +90,7 @@ CallScheduler::~CallScheduler()
 {
     // Stop scheduling tasks for the executor.
     {
-        std::lock_guard lock(_scheduler.mtx);
+        std::lock_guard<std::mutex> lock(_scheduler.mtx);
         _scheduler.stop = true;
     }
     _scheduler.cv.notify_one();
@@ -109,7 +109,7 @@ CallToken CallScheduler::add(std::function<Result()> call,
         .work = std::move(call), .pass = token, .interval = interval};
 
     {
-        std::lock_guard lock(_scheduler.mtx);
+        std::lock_guard<std::mutex> lock(_scheduler.mtx);
         _tasks.emplace(immediate ? std::chrono::steady_clock::now()
                                  : std::chrono::steady_clock::now() + interval,
                        std::move(task));
@@ -123,7 +123,7 @@ void CallScheduler::run()
 {
     while (!_scheduler.stop)
     {
-        std::unique_lock lock(_scheduler.mtx);
+        std::unique_lock<std::mutex> lock(_scheduler.mtx);
 
         if (_tasks.empty())
         {
@@ -172,7 +172,7 @@ void CallScheduler::TaskRunner::operator()()
             task.interval;
 
         {
-            std::lock_guard lock(_parent._scheduler.mtx);
+            std::lock_guard<std::mutex> lock(_parent._scheduler.mtx);
             _parent._tasks.insert(std::move(_node));
         }
         _parent._scheduler.cv.notify_one();

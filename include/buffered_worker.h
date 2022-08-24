@@ -43,7 +43,7 @@ template <class TaskType> class BufferedWorker
         if (!_stop)
         {
             ret = true;
-            std::lock_guard lock(_mtx);
+            std::lock_guard<std::mutex> lock(_mtx);
 
             if (_back->size() >= _maxLen)
             {
@@ -59,7 +59,7 @@ template <class TaskType> class BufferedWorker
 
     void cancelScheduled()
     {
-        std::lock_guard lock(_mtx);
+        std::lock_guard<std::mutex> lock(_mtx);
 
         std::queue<work_item_t> empty{};
         _back->swap(empty);
@@ -70,7 +70,7 @@ template <class TaskType> class BufferedWorker
         if (!_stop)
         {
             {
-                std::lock_guard lock(_mtx);
+                std::lock_guard<std::mutex> lock(_mtx);
                 _stop = true;
                 _bell.notify_one();
             }
@@ -85,7 +85,7 @@ template <class TaskType> class BufferedWorker
         while (!_stop)
         {
             {
-                std::lock_guard lock(_mtx);
+                std::lock_guard<std::mutex> lock(_mtx);
                 std::swap(_front, _back);
             }
 
@@ -96,7 +96,7 @@ template <class TaskType> class BufferedWorker
             }
 
             {
-                std::unique_lock lock(_mtx);
+                std::unique_lock<std::mutex> lock(_mtx);
                 _bell.wait(lock, [this] { return _stop || !_back->empty(); });
             }
         }
