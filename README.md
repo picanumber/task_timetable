@@ -1,4 +1,4 @@
-# Task scheduling  made easy
+# C++ task scheduler
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 [![](https://tokei.rs/b1/github/picanumber/task_timetable)](https://github.com/XAMPPRocky/tokei)
@@ -12,7 +12,7 @@ The goal of this library
 
 ## Structure
 
-
+The library is tested in Linux, MacOs and Windows.
 
 
 ## Building
