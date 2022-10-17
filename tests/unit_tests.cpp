@@ -21,7 +21,7 @@ TEST_CASE("Finish on time - Stop on request")
 
     std::atomic_uint nCalls{0};
     ttt::CallScheduler callTable;
-    auto threshold{200us};
+    //auto threshold{200us};
 
     {
         auto token = callTable.add(
