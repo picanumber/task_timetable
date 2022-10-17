@@ -14,8 +14,6 @@ jobs:
         compiler:
           - pkg: g++-11
             exe: g++-11
-          - pkg: clang-11
-            exe: clang++-11
 
     uses: picanumber/sanitizer_workflows/.github/workflows/asan.yml@main
     with:
