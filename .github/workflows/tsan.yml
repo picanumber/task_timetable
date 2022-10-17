@@ -1,0 +1,20 @@
+name: Threading
+# Due to a gcc bug, a false positive is reported on thread sanitizer, 
+# when using condition variable wait_for/wait_unitl, so thread 
+# sanitizer checks are performed using exclusively clang.
+# Sources:
+# - https://gcc.gnu.org/bugzilla//show_bug.cgi?id=101978
+# - https://stackoverflow.com/q/71188546/4224575
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  thread_sanitizer:
+    uses: picanumber/sanitizer_workflows/.github/workflows/tsan.yml@main  
+    with:
+      testDir: 'tests' 
+      compiler_package: 'clang-11'
+      compiler_name: 'clang++-11'
