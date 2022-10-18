@@ -6,6 +6,7 @@
 #include <functional>
 #include <string>
 #include <thread>
+#include <vector>
 
 using namespace std::chrono_literals;
 
@@ -84,9 +85,10 @@ TEST_CASE("Immediatelly cancelled tasks")
     }
 }
 
+#ifdef NDEBUG // Release mode specific since realistic timings are required.
 TEST_CASE("Detached task tokens")
 {
-    const int reps = 100;
+    const int reps = 10;
     std::atomic_size_t callCount{0};
     auto fun = [&callCount] {
         ++callCount;
@@ -156,6 +158,7 @@ TEST_CASE("Detached task tokens")
         }
     }
 }
+#endif
 
 TEST_CASE("Check token expiration")
 {
@@ -187,7 +190,9 @@ TEST_CASE("Check token expiration")
                     "No invocations allowed after token destruction");
 }
 
-TEST_CASE("Check repetition")
+// This check merely checks correctness of task repetition. Intervals are
+// purposely blown-up since it runs on sanitizer mode as well
+static void CheckRepetition(ttt::CallScheduler &plan, std::string const &prefix)
 {
     const size_t reps{5};
     std::atomic_size_t callCount{0};
@@ -197,19 +202,84 @@ TEST_CASE("Check repetition")
         return callCount < reps ? ttt::Result::Repeat : ttt::Result::Finished;
     };
 
-    ttt::CallScheduler plan;
     auto tkn = plan.add(fun, 10us, true);
-    std::this_thread::sleep_for(500us);
+    std::this_thread::sleep_for(1ms);
 
-    CHECK_MESSAGE(reps == callCount.load(), "Call should have finished");
+    CHECK_MESSAGE(reps == callCount.load(),
+                  (prefix + "Calls should have finished"));
 
     std::this_thread::sleep_for(500us);
-    REQUIRE_MESSAGE(reps == callCount.load(),
-                    "No furhter repetitions should happen");
+    CHECK_MESSAGE(reps == callCount.load(),
+                  (prefix + "No further repetitions should happen"));
 }
 
+TEST_CASE("Check repetition")
+{
+    ttt::CallScheduler plan1(true, 1);
+    CheckRepetition(plan1, "plan1: ");
+
+    ttt::CallScheduler plan2(false, 1);
+    CheckRepetition(plan2, "plan2: ");
+
+    ttt::CallScheduler plan3(true, 2);
+    CheckRepetition(plan3, "plan3: ");
+
+    ttt::CallScheduler plan4(false, 2);
+    CheckRepetition(plan4, "plan4: ");
+
+    ttt::CallScheduler plan5(true, 10);
+    CheckRepetition(plan5, "plan5: ");
+
+    ttt::CallScheduler plan6(false, 10);
+    CheckRepetition(plan6, "plan6: ");
+}
+
+#ifdef NDEBUG // Release mode specific since realistic timings are required.
 TEST_CASE("Check granularity")
 {
-    // TODO(picanumber): Make sure the scheduler can provide results with
-    // reasonable tolerance comared to the specified schedule.
+    auto tol = 100us; // 100 microseconds is the accepted TOTAL drift time. By
+                      // TOTAL we mean that this inconsistency is not added (or
+                      // multiplied) but taken as the upper limit of cummulative
+                      // error for schedulers that account for task execution
+                      // time in the calculation of intervals.
+    std::atomic_bool finished{false};
+    const std::size_t callReps = 100;
+    std::vector<std::chrono::steady_clock::time_point> callTimes;
+    callTimes.reserve(callReps);
+
+    auto marker = [&, cur = std::size_t(0)]() mutable {
+        callTimes.emplace_back(std::chrono::steady_clock::now());
+
+        ttt::Result ret = ttt::Result::Repeat;
+        if (callReps == ++cur)
+        {
+            finished = true;
+            ret = ttt::Result::Finished;
+        }
+
+        return ret;
+    };
+
+    ttt::CallScheduler plan;
+    const auto start = test::now();
+    plan.add(marker, 10ms, false).detach();
+
+    while (!finished)
+    {
+        REQUIRE_MESSAGE(test::delta<std::chrono::microseconds>(start).count() <=
+                            callReps * (10'000us).count() + tol.count(),
+                        "Scheduled tasks did not complete in time");
+    }
+
+    REQUIRE_MESSAGE(callTimes.size() == callReps, "Invalid call count");
+
+    for (std::size_t i = 0; i < callReps; ++i)
+    {
+        CHECK_MESSAGE(
+            test::delta<std::chrono::microseconds>(start, callTimes[i])
+                    .count() <=
+                (i + 1) * (10'000us).count() + (2 * tol).count(),
+            "Intermediate time point exceeds tolerance");
+    }
 }
+#endif

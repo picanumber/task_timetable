@@ -12,8 +12,18 @@ inline auto now()
     return std::chrono::steady_clock::now();
 }
 
-const auto delta = [](auto start) {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(start - now());
+template <class D = std::chrono::milliseconds,
+          class T = std::chrono::steady_clock::time_point>
+auto delta(T const &start)
+{
+    return std::chrono::duration_cast<D>(now() - start);
+};
+
+template <class D = std::chrono::milliseconds,
+          class T = std::chrono::steady_clock::time_point>
+auto delta(T const &start, T const &end)
+{
+    return std::chrono::duration_cast<D>(end - start);
 };
 
 } // namespace test
