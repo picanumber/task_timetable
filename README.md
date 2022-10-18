@@ -7,6 +7,7 @@
 [![CI](https://github.com/picanumber/task_timetable/actions/workflows/ci.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/ci.yml)
 [![Memory](https://github.com/picanumber/task_timetable/actions/workflows/asan.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/asan.yml)
 [![Threading](https://github.com/picanumber/task_timetable/actions/workflows/tsan.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/tsan.yml)
+[![Style](https://github.com/picanumber/task_timetable/actions/workflows/style.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/style.yml)
 
 The goal of this library
 

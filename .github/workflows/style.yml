@@ -10,7 +10,9 @@ jobs:
       matrix:
         path:
           - 'include'
-          - 'test'
+          - 'tests'
+          - 'src'
+          - 'app'
 
     steps:
     - uses: actions/checkout@v3
