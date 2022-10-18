@@ -1,5 +1,7 @@
 #include "scheduler.h"
+#include <algorithm>
 #include <chrono>
+#include <stdexcept>
 
 namespace ttt
 {
@@ -80,15 +82,21 @@ void CallToken::detach()
     _token.reset();
 }
 
-CallScheduler::CallScheduler(bool countOnTaskStart)
-    : _countOnTaskStart(countOnTaskStart)
+CallScheduler::CallScheduler(bool countOnTaskStart, unsigned nExecutors)
+    : _executors(std::min(nExecutors, std::thread::hardware_concurrency())),
+      _countOnTaskStart(countOnTaskStart)
 {
+    if (0 == nExecutors)
+    {
+        throw std::runtime_error(detail::kErrorNoWorkersInScheduler);
+    }
+
     _scheduler.consumer = std::thread(&CallScheduler::run, this);
 }
 
 CallScheduler::~CallScheduler()
 {
-    // Stop scheduling tasks for the executor.
+    // Stop scheduling tasks on the executors.
     {
         std::lock_guard<std::mutex> lock(_scheduler.mtx);
         _scheduler.stop = true;
@@ -97,7 +105,7 @@ CallScheduler::~CallScheduler()
     _scheduler.consumer.join();
 
     // Explicit so that access to destroyed tasks is prevented.
-    _executor.kill();
+    _executors.clear();
 }
 
 CallToken CallScheduler::add(std::function<Result()> call,
@@ -143,7 +151,8 @@ void CallScheduler::run()
 
         if (std::chrono::steady_clock::now() >= _tasks.begin()->first)
         {
-            _executor.add(TaskRunner(*this, _tasks.extract(_tasks.begin())));
+            _executors[_currentExecutor++ % _executors.size()].add(
+                TaskRunner(*this, _tasks.extract(_tasks.begin())));
         }
     }
 }

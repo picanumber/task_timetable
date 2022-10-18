@@ -15,7 +15,7 @@ TEST_CASE("Construction")
     CHECK_NOTHROW(ttt::BufferedWorker<std::function<void()>> worker(1'000));
 
     CHECK_THROWS_WITH_AS(ttt::BufferedWorker<std::function<void()>> worker(0);
-                         , ttt::kErrorWorkerSize, std::runtime_error);
+                         , ttt::detail::kErrorWorkerSize, std::runtime_error);
 }
 
 TEST_CASE("Execute All added tasks")

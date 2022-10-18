@@ -11,7 +11,12 @@
 namespace ttt
 {
 
+namespace detail
+{
+
 constexpr char kErrorWorkerSize[] = "Woker cannot have a zero length buffer";
+
+}
 
 /**
  * @brief A worker thread encapsulation.
@@ -41,7 +46,7 @@ template <class TaskType> class BufferedWorker
     {
         if (0 == maxLen)
         {
-            throw std::runtime_error(kErrorWorkerSize);
+            throw std::runtime_error(detail::kErrorWorkerSize);
         }
         _worker = std::thread(&BufferedWorker::consume, this);
     }
