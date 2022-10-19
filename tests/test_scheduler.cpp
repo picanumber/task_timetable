@@ -96,8 +96,8 @@ TEST_CASE("Detached task tokens")
         return ttt::Result::Finished;
     };
 
+    ttt::CallScheduler plan;
     {
-        ttt::CallScheduler plan;
         auto start = test::now();
         for (int i(0); i < reps; ++i)
         {
@@ -107,13 +107,11 @@ TEST_CASE("Detached task tokens")
         while (reps != callCount.load())
         {
             REQUIRE_MESSAGE(test::delta(start) < tol, "Tasks not executed");
-            std::this_thread::yield();
         }
     }
 
     {
         callCount = 0;
-        ttt::CallScheduler plan;
         auto start = test::now();
         for (int i(0); i < reps; ++i)
         {
@@ -123,39 +121,35 @@ TEST_CASE("Detached task tokens")
         while (reps != callCount.load())
         {
             REQUIRE_MESSAGE(test::delta(start) < tol, "Tasks not executed");
-            std::this_thread::yield();
         }
     }
 
+    ttt::CallScheduler plan2(true, 2);
     {
         callCount = 0;
-        ttt::CallScheduler plan(true, 2);
         auto start = test::now();
         for (int i(0); i < reps; ++i)
         {
-            plan.add(fun, 1us, false).detach();
+            plan2.add(fun, 1us, false).detach();
         }
 
         while (reps != callCount.load())
         {
             REQUIRE_MESSAGE(test::delta(start) < tol, "Tasks not executed");
-            std::this_thread::yield();
         }
     }
 
     {
         callCount = 0;
-        ttt::CallScheduler plan(true, 2);
         auto start = test::now();
         for (int i(0); i < reps; ++i)
         {
-            plan.add(fun, 1us, true).detach();
+            plan2.add(fun, 1us, true).detach();
         }
 
         while (reps != callCount.load())
         {
             REQUIRE_MESSAGE(test::delta(start) < tol, "Tasks not executed");
-            std::this_thread::yield();
         }
     }
 }
