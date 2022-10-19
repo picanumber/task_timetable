@@ -1,4 +1,5 @@
 # C++ task scheduler
+##### Defer tasks for execution or repetition at specified intervals.
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 [![](https://tokei.rs/b1/github/picanumber/task_timetable)](https://github.com/XAMPPRocky/tokei)
@@ -10,11 +11,9 @@
 [![CodeQL](https://github.com/picanumber/task_timetable/actions/workflows/codeql.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/codeql.yml)
 [![Style](https://github.com/picanumber/task_timetable/actions/workflows/style.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/style.yml)
 
-A facility to defer tasks for __execution or repetition at specified intervals__.
-
 ## Usage
 
-The functionality is available through the scheduler class:
+The library is tested on linux, macOs and windows. Schedulers are instances of the `CallScheduler` class, which resides in the `ttt` (task time table) namespace:
 
 ```cpp
 #include "scheduler.h"
