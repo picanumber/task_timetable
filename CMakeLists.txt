@@ -57,16 +57,14 @@ target_link_libraries(${LIBRARY_NAME} PUBLIC ${USED_LIBS})
 # Set the compile options you want (change as needed).
 target_set_warnings(${LIBRARY_NAME} ENABLE ALL AS_ERROR ALL DISABLE Annoying)
 
-# Add an executable for the file app/main.cpp.
-# If you add more executables, copy these lines accordingly.
-add_executable(main app/main.cpp)   # Name of exec. and location of file.
-target_link_libraries(main PRIVATE ${LIBRARY_NAME})
-target_set_warnings(main ENABLE ALL AS_ERROR ALL DISABLE Annoying) # Set warnings (if needed).
-target_enable_lto(main optimized)  # enable link-time-optimization if available for non-debug configurations
+# Add app executables
+add_executable(eg_ticker app/eg_ticker.cpp)  
+target_link_libraries(eg_ticker PRIVATE ${LIBRARY_NAME})
+target_set_warnings(eg_ticker ENABLE ALL AS_ERROR ALL DISABLE Annoying)
+target_enable_lto(eg_ticker optimized)  # enable lto if available for non-debug configurations
 
-# Set the properties you require, e.g. what C++ standard to use. Here applied to library and main (change as needed).
 set_target_properties(
-    ${LIBRARY_NAME} main
+    ${LIBRARY_NAME} eg_ticker
       PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES
