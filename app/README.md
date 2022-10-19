@@ -18,3 +18,12 @@ Where:
 * compensate: Next exeution is calculated as
     * 0 : userFunEndTime   + interval
     * 1 : userFunStartTime + interval
+
+### eg_ticker2
+
+Variation of the ticker demo where:
+
+* Hardware concurrency is used for the workers of the scheduler is used.
+* A second task is interleaved at twice the specified user interval.
+* The returned tokens are destroyed in fixed time points to demostrate the effects.
+* The demo exits after 11 seconds.
