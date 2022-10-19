@@ -30,7 +30,7 @@ The library is tested on linux, macOs and windows. Schedulers are instances of t
 }
 ```
 
-Adding a task to the scheduler is done using the `add` method:
+Adding a task to the scheduler is done using its `add` method:
 
 ```cpp
 {
