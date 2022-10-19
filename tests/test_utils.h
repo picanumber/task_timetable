@@ -17,7 +17,7 @@ template <class D = std::chrono::milliseconds,
 auto delta(T const &start)
 {
     return std::chrono::duration_cast<D>(now() - start);
-};
+}
 
 template <class D = std::chrono::milliseconds,
           class T = std::chrono::steady_clock::time_point>

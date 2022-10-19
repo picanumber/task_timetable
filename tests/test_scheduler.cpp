@@ -187,8 +187,10 @@ TEST_CASE("Check token expiration")
 
 // This check merely checks correctness of task repetition. Intervals are
 // purposely blown-up since it runs on sanitizer mode as well
-static void CheckRepetition(ttt::CallScheduler &plan, std::string const &prefix)
+static void CheckRepetition(std::string const &prefix, bool compensate,
+                            unsigned nWorkers)
 {
+    ttt::CallScheduler plan(compensate, nWorkers);
     const size_t reps{5};
     std::atomic_size_t callCount{0};
 
@@ -198,35 +200,24 @@ static void CheckRepetition(ttt::CallScheduler &plan, std::string const &prefix)
     };
 
     auto tkn = plan.add(fun, 10us, true);
-    std::this_thread::sleep_for(1ms);
+    std::this_thread::sleep_for(10ms);
 
     CHECK_MESSAGE(reps == callCount.load(),
                   (prefix + "Calls should have finished"));
 
-    std::this_thread::sleep_for(500us);
+    std::this_thread::sleep_for(1ms);
     CHECK_MESSAGE(reps == callCount.load(),
                   (prefix + "No further repetitions should happen"));
 }
 
 TEST_CASE("Check repetition")
 {
-    ttt::CallScheduler plan1(true, 1);
-    CheckRepetition(plan1, "plan1: ");
-
-    ttt::CallScheduler plan2(false, 1);
-    CheckRepetition(plan2, "plan2: ");
-
-    ttt::CallScheduler plan3(true, 2);
-    CheckRepetition(plan3, "plan3: ");
-
-    ttt::CallScheduler plan4(false, 2);
-    CheckRepetition(plan4, "plan4: ");
-
-    ttt::CallScheduler plan5(true, 10);
-    CheckRepetition(plan5, "plan5: ");
-
-    ttt::CallScheduler plan6(false, 10);
-    CheckRepetition(plan6, "plan6: ");
+    CheckRepetition("plan1: ", true, 1);
+    CheckRepetition("plan2: ", false, 1);
+    CheckRepetition("plan3: ", true, 2);
+    CheckRepetition("plan4: ", false, 2);
+    CheckRepetition("plan5: ", true, 10);
+    CheckRepetition("plan6: ", false, 10);
 }
 
 #ifdef NDEBUG // Release mode specific since realistic timings are required.
@@ -262,19 +253,18 @@ TEST_CASE("Check granularity")
     while (!finished)
     {
         WARN_MESSAGE(test::delta<std::chrono::microseconds>(start).count() <=
-                            callReps * (10'000us).count() + tol.count(),
-                        "Scheduled tasks did not complete in time");
+                         callReps * (10'000us).count() + tol.count(),
+                     "Scheduled tasks did not complete in time");
     }
 
     REQUIRE_MESSAGE(callTimes.size() == callReps, "Invalid call count");
 
     for (std::size_t i = 0; i < callReps; ++i)
     {
-        WARN_MESSAGE(
-            test::delta<std::chrono::microseconds>(start, callTimes[i])
-                    .count() <=
-                (i + 1) * (10'000us).count() + (2 * tol).count(),
-            "Intermediate time point exceeds tolerance");
+        WARN_MESSAGE(test::delta<std::chrono::microseconds>(start, callTimes[i])
+                             .count() <=
+                         (i + 1) * (10'000us).count() + (2 * tol).count(),
+                     "Intermediate time point exceeds tolerance");
     }
 }
 #endif
