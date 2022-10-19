@@ -48,21 +48,23 @@ Adding a task to the scheduler is done using the `add` method:
     auto token = plan.add(
         myTask, // User tasks are std::function<ttt::Result()>
         500ms,  // Interval for execution or repetition
-        false); // Whether to execute the task immediately
+        false); // Whether to immediately queue the task for execution
 }
 ```
 
-As shown above, the addition of a task is associated with a token. Additionally the returned token is marked `[[no_discard]]` to force some decision making to the user. Tokens are 1-1 associated with
-tasks added to the scheduler. Due to this association three things can happen:
+As shown above, the addition of a task returns a token marked `[[no_discard]]`. Tokens control the behavior of the associated task:
 
-1. The token is __alive__    : Task is allowed to run.
-2. The token is __destroyed__: Tasks are prevented from running after token destruction and are removed from the scheduler.
-3. The token is __detached__ : Task is independent from the token state.
+1. The token is __alive__     `=>` Task is allowed to run.
+2. The token is __destroyed__ `=>` Tasks are prevented from running after token destruction and are removed from the scheduler.
+3. The token is __detached__  `=>` Task is independent from the token state.
 
-A detached token is created by calling the `detach()` method. This implies that if there is no need to ever cancel an added task, e.g. it dies with the scheduler, the following syntax can be used to ignore the token upon creation:
+__To detach a token from its task__, call the `detach()` method. If there is no need to ever cancel a task, e.g. it dies with the scheduler, the following syntax can be used to ignore the token upon creation:
 
 ```cpp
-plan.add(myTask, interval, compensate).detach();
+plan.add(myTask, 500ms, false).detach();
+// user task ^^  ^^     ^^     ^^^^^^ Dissociate the token from task execution.
+//      interval ^^     ^^
+// schedule immediately ^^
 ```
 
 ## Building
