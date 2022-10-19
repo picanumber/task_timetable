@@ -58,13 +58,21 @@ target_link_libraries(${LIBRARY_NAME} PUBLIC ${USED_LIBS})
 target_set_warnings(${LIBRARY_NAME} ENABLE ALL AS_ERROR ALL DISABLE Annoying)
 
 # Add app executables
+# eg_ticker
 add_executable(eg_ticker app/eg_ticker.cpp)  
 target_link_libraries(eg_ticker PRIVATE ${LIBRARY_NAME})
 target_set_warnings(eg_ticker ENABLE ALL AS_ERROR ALL DISABLE Annoying)
 target_enable_lto(eg_ticker optimized)  # enable lto if available for non-debug configurations
+# eg_ticker2
+add_executable(eg_ticker2 app/eg_ticker2.cpp)  
+target_link_libraries(eg_ticker2 PRIVATE ${LIBRARY_NAME})
+target_set_warnings(eg_ticker2 ENABLE ALL AS_ERROR ALL DISABLE Annoying)
+target_enable_lto(eg_ticker2 optimized)  # enable lto if available for non-debug configurations
 
 set_target_properties(
-    ${LIBRARY_NAME} eg_ticker
+    ${LIBRARY_NAME} 
+    eg_ticker 
+    eg_ticker2
       PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES
