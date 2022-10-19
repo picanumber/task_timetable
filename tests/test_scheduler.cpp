@@ -88,6 +88,7 @@ TEST_CASE("Immediatelly cancelled tasks")
 #ifdef NDEBUG // Release mode specific since realistic timings are required.
 TEST_CASE("Detached task tokens")
 {
+    const auto tol = 5ms;
     const int reps = 10;
     std::atomic_size_t callCount{0};
     auto fun = [&callCount] {
@@ -105,7 +106,7 @@ TEST_CASE("Detached task tokens")
 
         while (reps != callCount.load())
         {
-            REQUIRE_MESSAGE(test::delta(start) < 1ms, "Tasks not executed");
+            REQUIRE_MESSAGE(test::delta(start) < tol, "Tasks not executed");
             std::this_thread::yield();
         }
     }
@@ -121,7 +122,7 @@ TEST_CASE("Detached task tokens")
 
         while (reps != callCount.load())
         {
-            REQUIRE_MESSAGE(test::delta(start) < 1ms, "Tasks not executed");
+            REQUIRE_MESSAGE(test::delta(start) < tol, "Tasks not executed");
             std::this_thread::yield();
         }
     }
@@ -137,7 +138,7 @@ TEST_CASE("Detached task tokens")
 
         while (reps != callCount.load())
         {
-            REQUIRE_MESSAGE(test::delta(start) < 1ms, "Tasks not executed");
+            REQUIRE_MESSAGE(test::delta(start) < tol, "Tasks not executed");
             std::this_thread::yield();
         }
     }
@@ -153,7 +154,7 @@ TEST_CASE("Detached task tokens")
 
         while (reps != callCount.load())
         {
-            REQUIRE_MESSAGE(test::delta(start) < 1ms, "Tasks not executed");
+            REQUIRE_MESSAGE(test::delta(start) < tol, "Tasks not executed");
             std::this_thread::yield();
         }
     }
@@ -237,7 +238,7 @@ TEST_CASE("Check repetition")
 #ifdef NDEBUG // Release mode specific since realistic timings are required.
 TEST_CASE("Check granularity")
 {
-    auto tol = 100us; // 100 microseconds is the accepted TOTAL drift time. By
+    auto tol = 150us; // 150 microseconds is the accepted TOTAL drift time. By
                       // TOTAL we mean that this inconsistency is not added (or
                       // multiplied) but taken as the upper limit of cummulative
                       // error for schedulers that account for task execution
@@ -277,8 +278,7 @@ TEST_CASE("Check granularity")
     {
         CHECK_MESSAGE(
             test::delta<std::chrono::microseconds>(start, callTimes[i])
-                    .count() <=
-                (i + 1) * (10'000us).count() + (2 * tol).count(),
+                    .count() <= (i + 1) * (10'000us).count() + tol.count(),
             "Intermediate time point exceeds tolerance");
     }
 }
