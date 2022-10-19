@@ -200,12 +200,12 @@ static void CheckRepetition(std::string const &prefix, bool compensate,
     };
 
     auto tkn = plan.add(fun, 10us, true);
-    std::this_thread::sleep_for(10ms);
+    std::this_thread::sleep_for(50ms);
 
     CHECK_MESSAGE(reps == callCount.load(),
                   (prefix + "Calls should have finished"));
 
-    std::this_thread::sleep_for(1ms);
+    std::this_thread::sleep_for(10ms);
     CHECK_MESSAGE(reps == callCount.load(),
                   (prefix + "No further repetitions should happen"));
 }
