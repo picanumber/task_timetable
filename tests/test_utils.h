@@ -24,6 +24,6 @@ template <class D = std::chrono::milliseconds,
 auto delta(T const &start, T const &end)
 {
     return std::chrono::duration_cast<D>(end - start);
-};
+}
 
 } // namespace test
