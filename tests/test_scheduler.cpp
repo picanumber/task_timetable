@@ -278,7 +278,8 @@ TEST_CASE("Check granularity")
     {
         CHECK_MESSAGE(
             test::delta<std::chrono::microseconds>(start, callTimes[i])
-                    .count() <= (i + 1) * (10'000us).count() + tol.count(),
+                    .count() <=
+                (i + 1) * (10'000us).count() + (2 * tol).count(),
             "Intermediate time point exceeds tolerance");
     }
 }

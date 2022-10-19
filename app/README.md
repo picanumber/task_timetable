@@ -14,7 +14,7 @@ $ eg_ticker msCount compensate
 
 Where:
 
-msCount   : interval in milliseconds
-compensate: Next exeution is calculated as
-    0 : userFunEndTime   + interval
-    1 : userFunStartTime + interval
+* msCount   : interval in milliseconds
+* compensate: Next exeution is calculated as
+    * 0 : userFunEndTime   + interval
+    * 1 : userFunStartTime + interval
