@@ -39,13 +39,13 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Configure (${{ matrix.configuration }})
-      run: cmake -S . -Bbuild -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
+      run: cmake -S . -B build_${{ matrix.configuration }} -DCMAKE_BUILD_TYPE=${{ matrix.configuration }}
 
     - name: Build with ${{ matrix.compiler }}
-      run: cmake --build build
+      run: cmake --build build_${{ matrix.configuration }}
 
     - name: Test
-      working-directory: build
+      working-directory: build_${{ matrix.configuration }}
       env:
         CTEST_OUTPUT_ON_FAILURE: 1
       run: ctest -C ${{ matrix.configuration }}
