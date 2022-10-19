@@ -22,7 +22,7 @@ The library is tested on linux, macOs and windows. Schedulers are instances of t
 
     bool compensate = true; // Whether to calculate the time point of task
                             // executions by adding the interval to the:
-                            // true: task start / end: task finish.
+                            // true: task start / false: task finish.
 
     unsigned nWorkers = 1;  // Number of workers that run tasks.
 
