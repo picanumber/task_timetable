@@ -43,7 +43,7 @@ int main(int argc, [[maybe_unused]] char *argv[])
         compensate = std::stoul(argv[2]);
     }
 
-    ttt::CallScheduler sched(compensate);
+    ttt::CallScheduler sched(compensate); // Default = 1 workers used.
 
     sched
         .add(
@@ -60,7 +60,7 @@ int main(int argc, [[maybe_unused]] char *argv[])
         .detach();
 
     std::string input;
-    std::cout << "Enter some input to exit\n";
+    std::cout << "Enter input to exit\n";
     std::cin >> input;
 
     return 0;
