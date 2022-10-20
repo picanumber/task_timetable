@@ -13,7 +13,11 @@
 
 ## Usage
 
-The library is tested on linux, macOs and windows. Schedulers are instances of the `CallScheduler` class, which resides in the `ttt` (task time table) namespace:
+The library is tested on linux, macOs and windows. 
+
+### Scheduler
+
+Schedulers are instances of the `CallScheduler` class, which resides in the `ttt` (task time table) namespace:
 
 ```cpp
 #include "scheduler.h"
@@ -75,6 +79,12 @@ auto token = std::optional(plan.add(myTask, 500ms, false));
 //
 token.reset(); // Triggers the token's destructor which cancels task execution.
 ```
+
+### Utilities
+
+The library is shipped with various classes that cover common scenarios.
+
+#### Timeline
 
 ## Building
 
