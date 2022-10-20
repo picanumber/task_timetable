@@ -66,6 +66,16 @@ plan.add(myTask, 500ms, false).detach();
 // schedule immediately ^^
 ```
 
+Users that don't want to use scopes and object lifetimes to control the execution of a task, i.e. let the destructor of token cancel the task, can wrap tokens in `std::optional` and explicitly trigger the cancellation of a task:
+
+```cpp
+auto token = std::optional(plan.add(myTask, 500ms, false));
+//
+// Let the task run for a desired amount of time.
+//
+token.reset(); // Triggers the token's destructor which cancels task execution.
+```
+
 ## Building
 
 Build by making a build directory (i.e. `build/`), run `cmake` in that dir, and then use `make` to build the desired target.
