@@ -11,12 +11,6 @@
 [![CodeQL](https://github.com/picanumber/task_timetable/actions/workflows/codeql.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/codeql.yml)
 [![Style](https://github.com/picanumber/task_timetable/actions/workflows/style.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/style.yml)
 
-## Contents
-- [User Guide](#Usage)
-  - [Call Scheduler](#Scheduler)
-  - [Utilities](#Utilities)
-- [Build](#Building)
-
 ## Usage
 
 The library is tested on linux, macOs and windows. 
