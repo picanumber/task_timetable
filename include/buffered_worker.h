@@ -14,7 +14,7 @@ namespace ttt
 namespace detail
 {
 
-constexpr char kErrorWorkerSize[] = "Woker cannot have a zero length buffer";
+constexpr char kErrorWorkerSize[] = "Worker cannot have a zero length buffer";
 
 }
 
