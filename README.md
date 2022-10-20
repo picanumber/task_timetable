@@ -1,7 +1,7 @@
 # C++ task scheduler
 ##### Defer tasks for execution or repetition at specified intervals.
 
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 [![](https://tokei.rs/b1/github/picanumber/task_timetable)](https://github.com/XAMPPRocky/tokei)
 [![license](https://img.shields.io/hexpm/l/plug)](https://github.com/picanumber/task_timetable/blob/a7b8eb6eed728255221909583d9e757b4e345a5a/LICENSE)
 
@@ -19,7 +19,6 @@ The library is tested on linux, macOs and windows. Schedulers are instances of t
 #include "scheduler.h"
 
 {
-
     bool compensate = true; // Whether to calculate the time point of task
                             // executions by adding the interval to the:
                             // true: task start / false: task finish.

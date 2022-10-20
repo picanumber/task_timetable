@@ -46,37 +46,43 @@ int main(int argc, [[maybe_unused]] char *argv[])
 
     ttt::CallScheduler sched(compensate, std::thread::hardware_concurrency());
 
-    auto tk1 = sched.add(
-        [value = 1, start = std::chrono::steady_clock::now()]() mutable {
-            auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start);
+    {
+        auto tk1 = sched.add(
+            [value = 1, start = std::chrono::steady_clock::now()]() mutable {
+                auto delta =
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::steady_clock::now() - start);
 
-            std::cout << std::to_string(value++) + "... Reached after " +
-                             std::to_string(delta.count()) + "ms\n";
+                std::cout << std::to_string(value++) + "... Reached after " +
+                                 std::to_string(delta.count()) + "ms\n";
 
-            return ttt::Result::Repeat;
-        },
-        std::chrono::milliseconds(msCount));
+                return ttt::Result::Repeat;
+            },
+            std::chrono::milliseconds(msCount));
 
-    auto tk2 = sched.add(
-        [value = 1, start = std::chrono::steady_clock::now()]() mutable {
-            auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - start);
+        {
+            auto tk2 = sched.add(
+                [value = 1,
+                 start = std::chrono::steady_clock::now()]() mutable {
+                    auto delta =
+                        std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now() - start);
 
-            std::cout << std::to_string(value++) + ">>> Reached after " +
-                             std::to_string(delta.count()) + "ms\n";
+                    std::cout << std::to_string(value++) +
+                                     ">>> Reached after " +
+                                     std::to_string(delta.count()) + "ms\n";
 
-            return ttt::Result::Repeat;
-        },
-        std::chrono::milliseconds(2 * msCount));
+                    return ttt::Result::Repeat;
+                },
+                std::chrono::milliseconds(2 * msCount));
 
-    std::this_thread::sleep_for(5s);
-    std::cout << "Destroying large task\n";
-    tk2.~CallToken();
+            std::this_thread::sleep_for(5s);
+        }
+        std::cout << "tk2 out of scope: Destroyed large task\n";
 
-    std::this_thread::sleep_for(5s);
-    std::cout << "Destroying small task\n";
-    tk1.~CallToken();
+        std::this_thread::sleep_for(5s);
+    }
+    std::cout << "tk1 out of scope: Destroyed small task\n";
 
     std::this_thread::sleep_for(1s);
 
