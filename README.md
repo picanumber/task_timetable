@@ -11,9 +11,19 @@
 [![CodeQL](https://github.com/picanumber/task_timetable/actions/workflows/codeql.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/codeql.yml)
 [![Style](https://github.com/picanumber/task_timetable/actions/workflows/style.yml/badge.svg)](https://github.com/picanumber/task_timetable/actions/workflows/style.yml)
 
+## Contents
+- [User Guide](#Usage)
+  - [Call Scheduler](#Scheduler)
+  - [Utilities](#Utilities)
+- [Build](#Building)
+
 ## Usage
 
-The library is tested on linux, macOs and windows. Schedulers are instances of the `CallScheduler` class, which resides in the `ttt` (task time table) namespace:
+The library is tested on linux, macOs and windows. 
+
+### Scheduler
+
+Schedulers are instances of the `CallScheduler` class, which resides in the `ttt` (task time table) namespace:
 
 ```cpp
 #include "scheduler.h"
@@ -75,6 +85,12 @@ auto token = std::optional(plan.add(myTask, 500ms, false));
 //
 token.reset(); // Triggers the token's destructor which cancels task execution.
 ```
+
+### Utilities
+
+The library is shipped with various classes that cover common scenarios.
+
+#### Timeline
 
 ## Building
 
