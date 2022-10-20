@@ -1,11 +1,11 @@
-#include <chrono>
-#include <cstring>
-#include <iostream>
-#include <string>
-#include <thread>
-
 #include "configurations.h"
 #include "scheduler.h"
+
+#include <chrono>
+#include <iostream>
+#include <optional>
+#include <string>
+#include <thread>
 
 using namespace std::chrono_literals;
 
@@ -46,44 +46,40 @@ int main(int argc, [[maybe_unused]] char *argv[])
 
     ttt::CallScheduler sched(compensate, std::thread::hardware_concurrency());
 
-    {
-        auto tk1 = sched.add(
-            [value = 1, start = std::chrono::steady_clock::now()]() mutable {
-                auto delta =
-                    std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::steady_clock::now() - start);
+    std::optional<ttt::CallToken> tk1 = sched.add(
+        [value = 1, start = std::chrono::steady_clock::now()]() mutable {
+            auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start);
 
-                std::cout << std::to_string(value++) + "... Reached after " +
-                                 std::to_string(delta.count()) + "ms\n";
+            std::cout << std::to_string(value++) + "... Reached after " +
+                             std::to_string(delta.count()) + "ms\n";
 
-                return ttt::Result::Repeat;
-            },
-            std::chrono::milliseconds(msCount));
+            return ttt::Result::Repeat;
+        },
+        std::chrono::milliseconds(msCount));
 
-        {
-            auto tk2 = sched.add(
-                [value = 1,
-                 start = std::chrono::steady_clock::now()]() mutable {
-                    auto delta =
-                        std::chrono::duration_cast<std::chrono::milliseconds>(
-                            std::chrono::steady_clock::now() - start);
+    std::optional<ttt::CallToken> tk2 = sched.add(
+        [value = 1, start = std::chrono::steady_clock::now()]() mutable {
+            auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start);
 
-                    std::cout << std::to_string(value++) +
-                                     ">>> Reached after " +
-                                     std::to_string(delta.count()) + "ms\n";
+            std::cout << std::to_string(value++) + ">>> Reached after " +
+                             std::to_string(delta.count()) + "ms\n";
 
-                    return ttt::Result::Repeat;
-                },
-                std::chrono::milliseconds(2 * msCount));
+            return ttt::Result::Repeat;
+        },
+        std::chrono::milliseconds(2 * msCount));
 
-            std::this_thread::sleep_for(5s);
-        }
-        std::cout << "tk2 out of scope: Destroyed large task\n";
+    // Execute tasks for 5s then kill the large interval task.
+    std::this_thread::sleep_for(5s);
+    tk2.reset();
+    std::cout << "tk2 out of scope: Destroyed large task\n";
 
-        std::this_thread::sleep_for(5s);
-    }
+    // Execute the small task for another 5s then kill it.
+    std::this_thread::sleep_for(5s);
+    tk1.reset();
     std::cout << "tk1 out of scope: Destroyed small task\n";
-
+    // Show the task is not running by waiting 1s for messages.
     std::this_thread::sleep_for(1s);
 
     return 0;
