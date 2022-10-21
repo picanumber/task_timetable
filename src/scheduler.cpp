@@ -1,3 +1,4 @@
+// © 2022 Nikolaos Athanasiou, github.com/picanumber
 #include "scheduler.h"
 #include <algorithm>
 #include <chrono>
@@ -21,7 +22,7 @@ class CallTokenImpl
         std::atomic_int &_state;
 
       public:
-        StateReset(std::atomic_int &state) : _state(state)
+        explicit StateReset(std::atomic_int &state) : _state(state)
         {
         }
 
@@ -35,7 +36,7 @@ class CallTokenImpl
     };
 
   public:
-    auto allow()
+    [[nodiscard]] auto allow()
     {
         int expected = kIdle;
         std::unique_ptr<StateReset> ret;
@@ -65,7 +66,7 @@ class CallTokenImpl
 } // namespace detail
 
 CallToken::CallToken(std::shared_ptr<detail::CallTokenImpl> token)
-    : _token(token)
+    : _token(std::move(token))
 {
 }
 
