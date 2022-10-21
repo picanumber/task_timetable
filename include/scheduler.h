@@ -1,3 +1,4 @@
+// © 2022 Nikolaos Athanasiou, github.com/picanumber
 #pragma once
 
 #include "buffered_worker.h"

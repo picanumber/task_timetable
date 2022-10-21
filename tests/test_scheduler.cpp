@@ -1,3 +1,4 @@
+// © 2022 Nikolaos Athanasiou, github.com/picanumber
 #include "doctest/doctest.h"
 #include "scheduler.h"
 #include "test_utils.h"

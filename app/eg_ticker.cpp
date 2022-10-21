@@ -1,3 +1,4 @@
+// © 2022 Nikolaos Athanasiou, github.com/picanumber
 #include <chrono>
 #include <cstring>
 #include <iostream>
