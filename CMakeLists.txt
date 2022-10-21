@@ -31,10 +31,9 @@ find_lto(CXX)
 # --------------------------------------------------------------------------------
 set(SOURCES          # All .cpp files in src/
     src/scheduler.cpp
+    src/timeline.cpp
 )
-set(TESTFILES        # All .cpp files in tests/
-    tests/main.cpp
-)
+set(TESTFILES tests/main.cpp)
 set(LIBRARY_NAME tttable)  # Default name for the library built from src/*.cpp
 
 # --------------------------------------------------------------------------------
@@ -68,11 +67,17 @@ add_executable(eg_ticker2 app/eg_ticker2.cpp)
 target_link_libraries(eg_ticker2 PRIVATE ${LIBRARY_NAME})
 target_set_warnings(eg_ticker2 ENABLE ALL AS_ERROR ALL DISABLE Annoying)
 target_enable_lto(eg_ticker2 optimized)  # enable lto if available for non-debug configurations
+# eg_timeline
+add_executable(eg_timeline app/eg_timeline.cpp)  
+target_link_libraries(eg_timeline PRIVATE ${LIBRARY_NAME})
+target_set_warnings(eg_timeline ENABLE ALL AS_ERROR ALL DISABLE Annoying)
+target_enable_lto(eg_timeline optimized)  # enable lto if available for non-debug configurations
 
 set_target_properties(
     ${LIBRARY_NAME} 
     eg_ticker 
     eg_ticker2
+    eg_timeline
       PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES
