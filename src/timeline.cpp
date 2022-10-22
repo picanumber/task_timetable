@@ -38,6 +38,7 @@ std::string stich(char delimiter, std::string const &arg,
                   string_like auto &&...args)
 {
     std::string ret;
+    ret.reserve((arg.size() + ... + std::size(args)));
     ((ret += arg), ..., (ret += delimiter, ret += args));
 
     return ret;
@@ -76,14 +77,35 @@ class TimerState
     // Returns whether it can tick again.
     bool tick()
     {
-        bool ret = false;
+        bool ret = true;
 
-        if (_remaining.count())
+        if (0 == _remaining.count())
         {
-            throw std::runtime_error(kInvalidTimerCountdown);
+            if (_repeating)
+            {
+                reset();
+            }
+            else
+            {
+                throw std::runtime_error(kInvalidTimerCountdown);
+            }
+        }
+        else
+        {
+            _remaining -= _resolution;
+        }
+
+        if (_remaining.count() == 0)
+        {
+            ret = _repeating;
         }
 
         return ret;
+    }
+
+    void reset()
+    {
+        _remaining = _duration;
     }
 };
 
