@@ -2,13 +2,16 @@
 #include "timeline.h"
 
 #include <chrono>
-#include <concepts>
 #include <cstdlib>
 #include <memory>
 #include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+
+#if __cpp_concepts
+#include <concepts>
+#endif
 
 namespace
 {
@@ -31,11 +34,16 @@ std::vector<std::string> split(std::string const &input, char delim)
     return ret;
 }
 
+#if __cpp_concepts
 template <class T>
 concept string_like = std::convertible_to<std::decay_t<T>, std::string>;
+#endif
 
 std::string stich(char delimiter, std::string const &arg,
-                  string_like auto &&...args)
+#if __cpp_concepts
+                  string_like
+#endif
+                  auto &&...args)
 {
     std::string ret;
     ret.reserve((arg.size() + ... + std::size(args)));

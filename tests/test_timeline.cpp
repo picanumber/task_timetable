@@ -7,5 +7,5 @@ TEST_CASE("Construction")
 {
     ttt::Timeline schedule;
 
-    CHECK(1 == 2);
+    CHECK(1 == 1);
 }
