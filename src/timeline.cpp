@@ -1,11 +1,14 @@
 // © 2022 Nikolaos Athanasiou, github.com/picanumber
 #include "timeline.h"
+
 #include <chrono>
+#include <concepts>
 #include <cstdlib>
 #include <memory>
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <string_view>
 
 namespace
 {
@@ -24,6 +27,18 @@ std::vector<std::string> split(std::string const &input, char delim)
     {
         ret.emplace_back(std::move(item));
     }
+
+    return ret;
+}
+
+template <class T>
+concept string_like = std::convertible_to<std::decay_t<T>, std::string>;
+
+std::string stich(char delimiter, std::string const &arg,
+                  string_like auto &&...args)
+{
+    std::string ret;
+    ((ret += arg), ..., (ret += delimiter, ret += args));
 
     return ret;
 }
@@ -51,20 +66,11 @@ class TimerState
 
     std::string toString() const
     {
-        std::string ret(ttt::kTimerElement);
-
-        ret += ttt::kElementFieldsDelimiter;
-        ret += _name;
-        ret += ttt::kElementFieldsDelimiter;
-        ret += std::to_string(_resolution.count());
-        ret += ttt::kElementFieldsDelimiter;
-        ret += std::to_string(_duration.count());
-        ret += ttt::kElementFieldsDelimiter;
-        ret += std::to_string(_remaining.count());
-        ret += ttt::kElementFieldsDelimiter;
-        ret += _repeating ? "1" : "0";
-
-        return ret;
+        return stich(ttt::kElementFieldsDelimiter, ttt::kTimerElement, _name,
+                     std::to_string(_resolution.count()),
+                     std::to_string(_duration.count()),
+                     std::to_string(_remaining.count()),
+                     (_repeating ? "1" : "0"));
     }
 
     // Returns whether it can tick again.
