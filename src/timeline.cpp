@@ -37,13 +37,13 @@ std::vector<std::string> split(std::string const &input, char delim)
 #if __cpp_concepts
 template <class T>
 concept string_like = std::convertible_to<std::decay_t<T>, std::string>;
-#endif
 
 std::string stich(char delimiter, std::string const &arg,
-#if __cpp_concepts
-                  string_like
+                  string_like auto &&...args)
+#else
+template <class... Args>
+std::string stich(char delimiter, std::string const &arg, Args &&...args)
 #endif
-                  auto &&...args)
 {
     std::string ret;
     ret.reserve((arg.size() + ... + std::size(args)));
