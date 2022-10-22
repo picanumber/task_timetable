@@ -8,8 +8,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
+#include <type_traits>
 
-#if __cpp_concepts
+#if 0
 #include <concepts>
 #endif
 
@@ -34,7 +35,7 @@ std::vector<std::string> split(std::string const &input, char delim)
     return ret;
 }
 
-#if __cpp_concepts
+#if 0
 template <class T>
 concept string_like = std::convertible_to<std::decay_t<T>, std::string>;
 
@@ -42,7 +43,10 @@ std::string stich(char delimiter, std::string const &arg,
                   string_like auto &&...args)
 #else
 template <class... Args>
-std::string stich(char delimiter, std::string const &arg, Args &&...args)
+auto stich(char delimiter, std::string const &arg, Args &&...args)
+    -> std::enable_if_t<
+        (std::is_convertible_v<std::decay_t<Args>, std::string> && ...),
+        std::string>
 #endif
 {
     std::string ret;
