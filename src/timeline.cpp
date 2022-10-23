@@ -76,8 +76,8 @@ class TimerState
     const bool _repeating;
 
     TimerState(std::vector<std::string> const &args)
-        : TimerState(args.at(0), millis_from(args.at(1)),
-                     millis_from(args.at(2)), args.at(3) == "1" ? true : false)
+        : TimerState(args.at(1), millis_from(args.at(2)),
+                     millis_from(args.at(3)), args.at(4) == "1" ? true : false)
     {
     }
 
