@@ -35,6 +35,12 @@ std::vector<std::string> split(std::string const &input, char delim)
     return ret;
 }
 
+template <class Rep, class Period>
+std::string to_string(std::chrono::duration<Rep, Period> const &d)
+{
+    return std::to_string(d.count());
+}
+
 #if 0
 template <class T>
 concept string_like = std::convertible_to<std::decay_t<T>, std::string>;
@@ -80,35 +86,30 @@ class TimerState
     std::string toString() const
     {
         return stich(ttt::kElementFieldsDelimiter, ttt::kTimerElement, _name,
-                     std::to_string(_resolution.count()),
-                     std::to_string(_duration.count()),
-                     std::to_string(_remaining.count()),
-                     (_repeating ? "1" : "0"));
+                     to_string(_resolution), to_string(_duration),
+                     to_string(_remaining), (_repeating ? "1" : "0"));
     }
 
-    // Returns whether it can tick again.
+    // Remove a "resolution" from remaining. Returns whether it can tick again.
     bool tick()
     {
         bool ret = true;
 
         if (0 == _remaining.count())
         {
-            if (_repeating)
-            {
-                reset();
-            }
-            else
-            {
-                throw std::runtime_error(kInvalidTimerCountdown);
-            }
+            throw std::runtime_error(kInvalidTimerCountdown);
         }
         else
         {
             _remaining -= _resolution;
         }
 
-        if (_remaining.count() == 0)
+        if (0 == _remaining.count())
         {
+            if (_repeating)
+            {
+                reset(); // Repeating clocks re-start from "duration".
+            }
             ret = _repeating;
         }
 
