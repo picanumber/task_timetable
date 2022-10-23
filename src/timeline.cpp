@@ -7,6 +7,7 @@
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <type_traits>
 
@@ -41,6 +42,11 @@ std::string to_string(std::chrono::duration<Rep, Period> const &d)
     return std::to_string(d.count());
 }
 
+std::chrono::milliseconds millis_from(std::string const &s)
+{
+    return std::chrono::milliseconds(std::stoul(s));
+}
+
 #if 0
 template <class T>
 concept string_like = std::convertible_to<std::decay_t<T>, std::string>;
@@ -65,22 +71,26 @@ auto stich(char delimiter, std::string const &arg, Args &&...args)
 class TimerState
 {
     std::string _name;
-    std::chrono::milliseconds _resolution, _duration;
+    const std::chrono::milliseconds _resolution, _duration;
     std::chrono::milliseconds _remaining;
-    bool _repeating;
+    const bool _repeating;
+
+    TimerState(std::vector<std::string> const &args)
+        : TimerState(args.at(0), millis_from(args.at(1)),
+                     millis_from(args.at(2)), args.at(3) == "1" ? true : false)
+    {
+    }
 
   public:
     TimerState(std::string const &state)
+        : TimerState(split(state, ttt::kElementFieldsDelimiter))
     {
-        auto fields = split(state, ttt::kElementFieldsDelimiter);
     }
-    TimerState(std::string const &name, std::size_t resolutionMs,
-               std::size_t durationMs)
-        : _name(name), _resolution(std::chrono::milliseconds(resolutionMs)),
-          _duration(std::chrono::milliseconds(durationMs)),
-          _remaining(_duration)
+    TimerState(std::string const &name, std::chrono::milliseconds resolution,
+               std::chrono::milliseconds duration, bool repeating)
+        : _name(name), _resolution(resolution), _duration(duration),
+          _remaining(duration), _repeating(repeating)
     {
-        // TODO(picanumber): _repeating!!
     }
 
     std::string toString() const
@@ -121,13 +131,6 @@ class TimerState
         _remaining = _duration;
     }
 };
-
-#if 0
-auto operator<=>(TimerState const &lhs, TimerState const &rhs)
-{
-    return lhs.name() <=> rhs.name();
-}
-#endif
 
 } // namespace
 
