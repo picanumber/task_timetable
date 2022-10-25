@@ -1,14 +1,15 @@
 // © 2022 Nikolaos Athanasiou, github.com/picanumber
 #include "timeline.h"
+#include "scheduler.h"
 
 #include <chrono>
-#include <cstdlib>
+#include <map>
 #include <memory>
-#include <set>
+#include <mutex>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <type_traits>
 
 #if 0
@@ -18,7 +19,9 @@
 namespace
 {
 
+constexpr char kNotIMplemented[] = "Feature not implemented";
 constexpr char kInvalidTimerCountdown[] = "Timers cannot tick beyond zero";
+constexpr char kInvalidElementType[] = "Type not oneof timer-pulse-alarm";
 
 std::vector<std::string> split(std::string const &input, char delim)
 {
@@ -68,22 +71,21 @@ auto stich(char delimiter, std::string const &arg, Args &&...args)
     return ret;
 }
 
-class TimerState
+class TimerState : public ttt::TimelineEntity
 {
     std::string _name;
     const std::chrono::milliseconds _resolution, _duration;
     std::chrono::milliseconds _remaining;
     const bool _repeating;
 
-    TimerState(std::vector<std::string> const &args)
-        : TimerState(args.at(1), millis_from(args.at(2)),
-                     millis_from(args.at(3)), args.at(4) == "1" ? true : false)
-    {
-    }
-
   public:
     TimerState(std::string const &state)
         : TimerState(split(state, ttt::kElementFieldsDelimiter))
+    {
+    }
+    TimerState(std::vector<std::string> const &args)
+        : TimerState(args.at(1), millis_from(args.at(2)),
+                     millis_from(args.at(3)), args.at(5) == "1" ? true : false)
     {
     }
     TimerState(std::string const &name, std::chrono::milliseconds resolution,
@@ -93,7 +95,7 @@ class TimerState
     {
     }
 
-    std::string toString() const
+    std::string toString() const override
     {
         return stich(ttt::kElementFieldsDelimiter, ttt::kTimerElement, _name,
                      to_string(_resolution), to_string(_duration),
@@ -130,6 +132,22 @@ class TimerState
     {
         _remaining = _duration;
     }
+
+    auto resolution() const
+    {
+        return _resolution;
+    }
+};
+
+struct TimerEntry
+{
+    std::shared_ptr<TimerState> state;
+    std::optional<ttt::CallToken> token;
+
+    explicit TimerEntry(std::vector<std::string> const &stateFields)
+        : state(std::make_shared<TimerState>(stateFields))
+    {
+    }
 };
 
 } // namespace
@@ -139,16 +157,57 @@ namespace ttt
 
 class TimelineImpl
 {
-    std::set<TimerState> _timers;
+    std::mutex _mtx;
+    ttt::CallScheduler _schedule;
+    std::map<std::string, TimerEntry> _timers;
 
   public:
-    TimelineImpl()
-    {
-    }
+    TimelineImpl() = default;
 
-    TimelineImpl(std::vector<TimelineElement> const &elements)
+    TimelineImpl(std::vector<std::string> const &elements,
+                 std::function<void(ttt::TimelineEntity const &)> call)
     {
-        (void)elements;
+        for (auto const &el : elements)
+        {
+            auto fields = split(el, kElementFieldsDelimiter);
+            auto const &entityType = fields.at(0);
+
+            if (entityType == kTimerElement)
+            {
+                if (auto [it, ok] = _timers.try_emplace(fields.at(1), fields);
+                    true == ok)
+                {
+                    auto callback = [observer = std::weak_ptr(it->second.state),
+                                     action = call] {
+                        auto ret = ttt::Result::Repeat;
+                        if (auto ptr = observer.lock())
+                        {
+                            if (!ptr->tick())
+                            {
+                                ret = ttt::Result::Finished;
+                            }
+                            action(dynamic_cast<ttt::TimelineEntity &>(*ptr));
+                        }
+                        return ret;
+                    };
+                    it->second.token.emplace(
+                        _schedule.add(std::move(callback),
+                                      it->second.state->resolution(), true));
+                }
+            }
+            else if (entityType == kPulseElement)
+            {
+                throw std::runtime_error(kNotIMplemented);
+            }
+            else if (entityType == kAlarmElement)
+            {
+                throw std::runtime_error(kNotIMplemented);
+            }
+            else
+            {
+                throw std::runtime_error(kInvalidElementType);
+            }
+        }
     }
 };
 
@@ -157,12 +216,25 @@ class TimelineImpl
 namespace ttt
 {
 
+std::string TimerString([[maybe_unused]] std::string const &name,
+                        [[maybe_unused]] std::chrono::milliseconds resolution,
+                        [[maybe_unused]] std::chrono::milliseconds duration,
+                        [[maybe_unused]] std::chrono::milliseconds remaining,
+                        [[maybe_unused]] bool repeating)
+{
+
+    return {};
+}
+
+TimelineEntity::~TimelineEntity() = default;
+
 Timeline::Timeline() : _impl(std::make_unique<TimelineImpl>())
 {
 }
 
-Timeline::Timeline(std::vector<TimelineElement> const &elements)
-    : _impl(std::make_unique<TimelineImpl>(elements))
+Timeline::Timeline(std::vector<std::string> const &elements,
+                   std::function<void(TimelineEntity const &)> call)
+    : _impl(std::make_unique<TimelineImpl>(elements, std::move(call)))
 {
 }
 

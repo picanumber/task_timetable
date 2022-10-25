@@ -3,6 +3,7 @@
 
 #include "scheduler.h"
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -18,10 +19,17 @@ constexpr char kTimerElement[] = "timer";
 constexpr char kPulseElement[] = "pulse";
 constexpr char kAlarmElement[] = "alarm";
 
-struct TimelineElement
+constexpr short kElementFieldSz = std::extent<decltype(kTimerElement)>::value;
+
+std::string TimerString(std::string const &name,
+                        std::chrono::milliseconds resolution,
+                        std::chrono::milliseconds duration,
+                        std::chrono::milliseconds remaining, bool repeating);
+
+struct TimelineEntity
 {
-    std::string key; // element:name
-    std::string val; // state
+    virtual ~TimelineEntity();
+    virtual std::string toString() const = 0;
 };
 
 class Timeline final
@@ -30,7 +38,8 @@ class Timeline final
 
   public:
     Timeline();
-    explicit Timeline(std::vector<TimelineElement> const &elements);
+    explicit Timeline(std::vector<std::string> const &elements,
+                      std::function<void(TimelineEntity const &)> call);
     ~Timeline();
 
     // General
