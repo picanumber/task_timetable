@@ -19,6 +19,14 @@
 namespace
 {
 
+constexpr char kElementFieldsDelimiter = ':';
+
+constexpr char kTimerElement[] = "timer";
+constexpr char kPulseElement[] = "pulse";
+constexpr char kAlarmElement[] = "alarm";
+
+constexpr short kElementFieldSz = std::extent<decltype(kTimerElement)>::value;
+
 constexpr char kNotIMplemented[] = "Feature not implemented";
 constexpr char kInvalidTimerCountdown[] = "Timers cannot tick beyond zero";
 constexpr char kInvalidElementType[] = "Type not oneof timer-pulse-alarm";
@@ -71,35 +79,32 @@ auto stich(char delimiter, std::string const &arg, Args &&...args)
     return ret;
 }
 
-class TimerState : public ttt::TimelineEntity
+class TimerEntity
 {
-    std::string _name;
-    const std::chrono::milliseconds _resolution, _duration;
-    std::chrono::milliseconds _remaining;
-    const bool _repeating;
+    ttt::TimerState _state;
 
   public:
-    TimerState(std::string const &state)
-        : TimerState(split(state, ttt::kElementFieldsDelimiter))
+    TimerEntity(std::string const &state)
+        : TimerEntity(split(state, kElementFieldsDelimiter))
     {
     }
-    TimerState(std::vector<std::string> const &args)
-        : TimerState(args.at(1), millis_from(args.at(2)),
-                     millis_from(args.at(3)), args.at(5) == "1" ? true : false)
+    TimerEntity(std::vector<std::string> const &args)
+        : TimerEntity(args.at(1), millis_from(args.at(2)),
+                      millis_from(args.at(3)), args.at(5) == "1" ? true : false)
     {
     }
-    TimerState(std::string const &name, std::chrono::milliseconds resolution,
-               std::chrono::milliseconds duration, bool repeating)
-        : _name(name), _resolution(resolution), _duration(duration),
-          _remaining(duration), _repeating(repeating)
+    TimerEntity(std::string const &name, std::chrono::milliseconds resolution,
+                std::chrono::milliseconds duration, bool repeating)
+        : _state{name, resolution, duration, duration, repeating}
     {
     }
 
-    std::string toString() const override
+    std::string toString() const
     {
-        return stich(ttt::kElementFieldsDelimiter, ttt::kTimerElement, _name,
-                     to_string(_resolution), to_string(_duration),
-                     to_string(_remaining), (_repeating ? "1" : "0"));
+        return stich(kElementFieldsDelimiter, kTimerElement, _state.name,
+                     to_string(_state.resolution), to_string(_state.duration),
+                     to_string(_state.remaining),
+                     (_state.repeating ? "1" : "0"));
     }
 
     // Remove a "resolution" from remaining. Returns whether it can tick again.
@@ -107,22 +112,22 @@ class TimerState : public ttt::TimelineEntity
     {
         bool ret = true;
 
-        if (0 == _remaining.count())
+        if (0 == _state.remaining.count())
         {
             throw std::runtime_error(kInvalidTimerCountdown);
         }
         else
         {
-            _remaining -= _resolution;
+            _state.remaining -= _state.resolution;
         }
 
-        if (0 == _remaining.count())
+        if (0 == _state.remaining.count())
         {
-            if (_repeating)
+            if (_state.repeating)
             {
                 reset(); // Repeating clocks re-start from "duration".
             }
-            ret = _repeating;
+            ret = _state.repeating;
         }
 
         return ret;
@@ -130,22 +135,22 @@ class TimerState : public ttt::TimelineEntity
 
     void reset()
     {
-        _remaining = _duration;
+        _state.remaining = _state.duration;
     }
 
-    auto resolution() const
+    ttt::TimerState const &state() const
     {
-        return _resolution;
+        return _state;
     }
 };
 
 struct TimerEntry
 {
-    std::shared_ptr<TimerState> state;
+    std::shared_ptr<TimerEntity> entity;
     std::optional<ttt::CallToken> token;
 
     explicit TimerEntry(std::vector<std::string> const &stateFields)
-        : state(std::make_shared<TimerState>(stateFields))
+        : entity(std::make_shared<TimerEntity>(stateFields))
     {
     }
 };
@@ -165,7 +170,7 @@ class TimelineImpl
     TimelineImpl() = default;
 
     TimelineImpl(std::vector<std::string> const &elements,
-                 std::function<void(ttt::TimelineEntity const &)> call)
+                 std::function<void(ttt::TimerState const &)> timersEvent)
     {
         for (auto const &el : elements)
         {
@@ -177,8 +182,9 @@ class TimelineImpl
                 if (auto [it, ok] = _timers.try_emplace(fields.at(1), fields);
                     true == ok)
                 {
-                    auto callback = [observer = std::weak_ptr(it->second.state),
-                                     action = call] {
+                    auto callback = [observer =
+                                         std::weak_ptr(it->second.entity),
+                                     action = timersEvent] {
                         auto ret = ttt::Result::Repeat;
                         if (auto ptr = observer.lock())
                         {
@@ -186,13 +192,13 @@ class TimelineImpl
                             {
                                 ret = ttt::Result::Finished;
                             }
-                            action(dynamic_cast<ttt::TimelineEntity &>(*ptr));
+                            action(ptr->state());
                         }
                         return ret;
                     };
-                    it->second.token.emplace(
-                        _schedule.add(std::move(callback),
-                                      it->second.state->resolution(), true));
+                    it->second.token.emplace(_schedule.add(
+                        std::move(callback),
+                        it->second.entity->state().resolution, false));
                 }
             }
             else if (entityType == kPulseElement)
@@ -216,25 +222,33 @@ class TimelineImpl
 namespace ttt
 {
 
-std::string TimerString([[maybe_unused]] std::string const &name,
-                        [[maybe_unused]] std::chrono::milliseconds resolution,
-                        [[maybe_unused]] std::chrono::milliseconds duration,
-                        [[maybe_unused]] std::chrono::milliseconds remaining,
-                        [[maybe_unused]] bool repeating)
+std::pair<std::string, std::string> KeyValueFrom(std::string const &stateStr)
 {
+    std::pair<std::string, std::string> ret;
 
-    return {};
+    if (auto splitPos =
+            stateStr.find(kElementFieldsDelimiter, kElementFieldSz + 1);
+        splitPos != std::string::npos)
+    {
+        ret.first = stateStr.substr(0, splitPos);
+        ret.second = stateStr.substr(splitPos + 1);
+    }
+
+    return ret;
 }
 
-TimelineEntity::~TimelineEntity() = default;
+std::string StateStringFrom(std::string const &key, std::string const &value)
+{
+    return stich(kElementFieldsDelimiter, key, value);
+}
 
 Timeline::Timeline() : _impl(std::make_unique<TimelineImpl>())
 {
 }
 
 Timeline::Timeline(std::vector<std::string> const &elements,
-                   std::function<void(TimelineEntity const &)> call)
-    : _impl(std::make_unique<TimelineImpl>(elements, std::move(call)))
+                   std::function<void(TimerState const &)> timersEvent)
+    : _impl(std::make_unique<TimelineImpl>(elements, std::move(timersEvent)))
 {
 }
 

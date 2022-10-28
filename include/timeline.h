@@ -6,6 +6,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ttt
@@ -13,24 +14,17 @@ namespace ttt
 
 class TimelineImpl;
 
-constexpr char kElementFieldsDelimiter = ':';
-
-constexpr char kTimerElement[] = "timer";
-constexpr char kPulseElement[] = "pulse";
-constexpr char kAlarmElement[] = "alarm";
-
-constexpr short kElementFieldSz = std::extent<decltype(kTimerElement)>::value;
-
-std::string TimerString(std::string const &name,
-                        std::chrono::milliseconds resolution,
-                        std::chrono::milliseconds duration,
-                        std::chrono::milliseconds remaining, bool repeating);
-
-struct TimelineEntity
+struct TimerState
 {
-    virtual ~TimelineEntity();
-    virtual std::string toString() const = 0;
+    const std::string name;
+    const std::chrono::milliseconds resolution;
+    const std::chrono::milliseconds duration;
+    std::chrono::milliseconds remaining;
+    const bool repeating;
 };
+
+std::pair<std::string, std::string> KeyValueFrom(std::string const &stateStr);
+std::string StateStringFrom(std::string const &key, std::string const &value);
 
 class Timeline final
 {
@@ -39,16 +33,21 @@ class Timeline final
   public:
     Timeline();
     explicit Timeline(std::vector<std::string> const &elements,
-                      std::function<void(TimelineEntity const &)> call);
+                      std::function<void(TimerState const &)> timersEvent);
     ~Timeline();
 
-    // General
+    /**
+     * @brief String representation of the state of all entities.
+     *
+     * @return Collection of strings containing all state, apart from the
+     * attached callbacks.
+     */
     std::vector<std::string> serialize() const;
-    bool add(std::string const &element);
 
     // Timer
     bool addTimer(std::string const &name, std::size_t durationMs,
-                  std::size_t resolutionMs, bool repeating);
+                  std::size_t resolutionMs, bool repeating,
+                  std::function<void(TimerState const &)> onTick);
     bool removeTimer(std::string const &name);
     bool resetTimer(std::string const &name);
     bool stopTimer(std::string const &name);
