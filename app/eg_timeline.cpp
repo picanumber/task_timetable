@@ -19,5 +19,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
 
     std::cout << "Demoing timeline class " << vStr << std::endl;
 
+    ttt::Timeline timeline;
+
+    if (timeline.addTimer(
+            "t1", 500ms, 10'000ms, true, [](ttt::TimerState const &s) {
+                std::cout << s.name << "> " << s.remaining.count() << "/"
+                          << s.duration.count() << std::endl;
+            }))
+    {
+        std::this_thread::sleep_for(15s);
+    }
+
     return 0;
 }

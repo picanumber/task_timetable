@@ -149,8 +149,9 @@ struct TimerEntry
     std::shared_ptr<TimerEntity> entity;
     std::optional<ttt::CallToken> token;
 
-    explicit TimerEntry(std::vector<std::string> const &stateFields)
-        : entity(std::make_shared<TimerEntity>(stateFields))
+    template <class... Args>
+    explicit TimerEntry(Args &&...args)
+        : entity(std::make_shared<TimerEntity>(std::forward<Args>(args)...))
     {
     }
 };
@@ -163,8 +164,8 @@ namespace ttt
 class TimelineImpl
 {
     std::mutex _mtx;
-    ttt::CallScheduler _schedule;
     std::map<std::string, TimerEntry> _timers;
+    ttt::CallScheduler _schedule;
 
   public:
     TimelineImpl() = default;
@@ -182,23 +183,8 @@ class TimelineImpl
                 if (auto [it, ok] = _timers.try_emplace(fields.at(1), fields);
                     true == ok)
                 {
-                    auto callback = [observer =
-                                         std::weak_ptr(it->second.entity),
-                                     action = timersEvent] {
-                        auto ret = ttt::Result::Repeat;
-                        if (auto ptr = observer.lock())
-                        {
-                            if (!ptr->tick())
-                            {
-                                ret = ttt::Result::Finished;
-                            }
-                            action(ptr->state());
-                        }
-                        return ret;
-                    };
-                    it->second.token.emplace(_schedule.add(
-                        std::move(callback),
-                        it->second.entity->state().resolution, false));
+                    it->second.token.emplace(
+                        scheduleTimer(it->second.entity, timersEvent));
                 }
             }
             else if (entityType == kPulseElement)
@@ -214,6 +200,46 @@ class TimelineImpl
                 throw std::runtime_error(kInvalidElementType);
             }
         }
+    }
+
+    bool addTimer(std::string const &name, std::chrono::milliseconds resolution,
+                  std::chrono::milliseconds duration, bool repeating,
+                  std::function<void(TimerState const &)> onTick)
+    {
+        std::lock_guard<std::mutex> lock(_mtx);
+        auto [it, ok] =
+            _timers.try_emplace(name, name, resolution, duration, repeating);
+
+        if (ok)
+        {
+            it->second.token.emplace(
+                scheduleTimer(it->second.entity, std::move(onTick)));
+        }
+
+        return ok;
+    }
+
+  private:
+    [[nodiscard]] ttt::CallToken scheduleTimer(
+        std::shared_ptr<TimerEntity> &ent,
+        std::function<void(ttt::TimerState const &)> event)
+    {
+        auto callback = [observer = std::weak_ptr(ent),
+                         action = std::move(event)] {
+            auto ret = ttt::Result::Repeat;
+            if (auto ptr = observer.lock())
+            {
+                if (!ptr->tick())
+                {
+                    ret = ttt::Result::Finished;
+                }
+                action(ptr->state());
+            }
+            return ret;
+        };
+
+        return _schedule.add(std::move(callback), ent->state().resolution,
+                             false);
     }
 };
 
@@ -253,5 +279,19 @@ Timeline::Timeline(std::vector<std::string> const &elements,
 }
 
 Timeline::~Timeline() = default;
+
+std::vector<std::string> Timeline::serialize() const
+{
+    return {}; // TODO: always lock implementation before ..
+}
+
+bool Timeline::addTimer(std::string const &name,
+                        std::chrono::milliseconds resolution,
+                        std::chrono::milliseconds duration, bool repeating,
+                        std::function<void(TimerState const &)> onTick)
+{
+    return _impl->addTimer(name, resolution, duration, repeating,
+                           std::move(onTick));
+}
 
 } // namespace ttt

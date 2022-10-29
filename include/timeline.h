@@ -32,6 +32,12 @@ class Timeline final
 
   public:
     Timeline();
+    /**
+     * @brief Construct a timeline out of serialized information.
+     *
+     * @param elements All entities as state strings.
+     * @param timersEvent Callback that applies to timer events.
+     */
     explicit Timeline(std::vector<std::string> const &elements,
                       std::function<void(TimerState const &)> timersEvent);
     ~Timeline();
@@ -44,9 +50,19 @@ class Timeline final
      */
     std::vector<std::string> serialize() const;
 
-    // Timer
-    bool addTimer(std::string const &name, std::size_t durationMs,
-                  std::size_t resolutionMs, bool repeating,
+    /**
+     * @brief Add a timer to the timeline.
+     *
+     * @param name Timer description.
+     * @param resolution Interval between timer invocations.
+     * @param duration Total execution time for the timer.
+     * @param repeating Whether to count from the top when reaching zero.
+     * @param onTick Callback to execute on invocation of the timer.
+     *
+     * @return Whether the timer was added.
+     */
+    bool addTimer(std::string const &name, std::chrono::milliseconds resolution,
+                  std::chrono::milliseconds duration, bool repeating,
                   std::function<void(TimerState const &)> onTick);
     bool removeTimer(std::string const &name);
     bool resetTimer(std::string const &name);
