@@ -14,6 +14,9 @@ namespace ttt
 
 class TimelineImpl;
 
+/**
+ * @brief Aggregate of values making up the state of a timer.
+ */
 struct TimerState
 {
     const std::string name;
@@ -23,7 +26,10 @@ struct TimerState
     const bool repeating;
 };
 
+// Split a state string into key and value.
 std::pair<std::string, std::string> KeyValueFrom(std::string const &stateStr);
+
+// Stich a key-value pair into a state string.
 std::string StateStringFrom(std::string const &key, std::string const &value);
 
 class Timeline final

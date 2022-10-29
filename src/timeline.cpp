@@ -163,7 +163,7 @@ namespace ttt
 
 class TimelineImpl
 {
-    std::mutex _mtx;
+    mutable std::mutex _mtx;
     std::map<std::string, TimerEntry> _timers;
     ttt::CallScheduler _schedule;
 
@@ -202,6 +202,23 @@ class TimelineImpl
         }
     }
 
+    std::vector<std::string> serialize() const
+    {
+        std::lock_guard<std::mutex> lock(_mtx);
+
+        std::vector<std::string> ret;
+        ret.reserve(_timers.size() /* + _pulses.size() + _alarms.size() */);
+
+        for (auto const &[name, timerEntry] : _timers)
+        {
+            ret.push_back(timerEntry.entity->toString());
+        }
+
+        // TODO: Same for pulses and alarms
+
+        return ret;
+    }
+
     bool addTimer(std::string const &name, std::chrono::milliseconds resolution,
                   std::chrono::milliseconds duration, bool repeating,
                   std::function<void(TimerState const &)> onTick)
@@ -217,6 +234,12 @@ class TimelineImpl
         }
 
         return ok;
+    }
+
+    bool removeTimer(std::string const &name)
+    {
+        std::lock_guard<std::mutex> lock(_mtx);
+        return _timers.erase(name);
     }
 
   private:
@@ -282,7 +305,7 @@ Timeline::~Timeline() = default;
 
 std::vector<std::string> Timeline::serialize() const
 {
-    return {}; // TODO: always lock implementation before ..
+    return _impl->serialize();
 }
 
 bool Timeline::addTimer(std::string const &name,
