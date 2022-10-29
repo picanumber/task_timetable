@@ -67,14 +67,51 @@ class Timeline final
      *
      * @return Whether the timer was added.
      */
-    bool addTimer(std::string const &name, std::chrono::milliseconds resolution,
+    bool timerAdd(std::string const &name, std::chrono::milliseconds resolution,
                   std::chrono::milliseconds duration, bool repeating,
                   std::function<void(TimerState const &)> onTick);
-    bool removeTimer(std::string const &name);
-    bool resetTimer(std::string const &name);
-    bool stopTimer(std::string const &name);
-    bool pauseTimer(std::string const &name);
-    bool resumeTimer(std::string const &name);
+    /**
+     * @brief Remove the specified timer.
+     *
+     * @param name Name of the timer to remove.
+     *
+     * @return Whether the timer was removed.
+     */
+    bool timerRemove(std::string const &name);
+    /**
+     * @brief Reset the remaining time.
+     *
+     * @param name Name of the timer to reset.
+     *
+     * @return Whether the timer was reset.
+     */
+    bool timerReset(std::string const &name);
+    /**
+     * @brief Stop the specified timer, i.e. stop ticking and reset the timer
+     * entity state.
+     *
+     * @param name Name of the timer to stop.
+     *
+     * @return Whether the timer was stopped.
+     */
+    bool timerStop(std::string const &name);
+    /**
+     * @brief Pause the specified timer, i.e. pause ticking and keep state as
+     * is.
+     *
+     * @param name Name of the timer to pause.
+     *
+     * @return Whether the timer was paused.
+     */
+    bool timerPause(std::string const &name);
+    /**
+     * @brief Force a timer to start ticking again.
+     *
+     * @param name Name of the timer to resume.
+     *
+     * @return Whether timer event emission was resumed.
+     */
+    bool timerResume(std::string const &name);
 
     // Pulse
     // Alarm

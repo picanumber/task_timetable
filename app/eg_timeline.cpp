@@ -19,16 +19,25 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
 
     std::cout << "Demoing timeline class " << vStr << std::endl;
 
+    std::string t1("t1");
     ttt::Timeline timeline;
 
-    if (timeline.addTimer(
-            "t1", 500ms, 10'000ms, true, [](ttt::TimerState const &s) {
+    if (timeline.timerAdd(
+            t1, 500ms, 3'000ms, true, [](ttt::TimerState const &s) {
                 std::cout << s.name << "> " << s.remaining.count() << "/"
                           << s.duration.count() << std::endl;
             }))
     {
-        std::this_thread::sleep_for(15s);
+        std::this_thread::sleep_for(5s);
     }
+
+    timeline.timerPause(t1);
+    std::cout << "Paused for 3 secs" << std::endl;
+    std::this_thread::sleep_for(3s);
+
+    std::cout << "Resuming for 3 secs more" << std::endl;
+    timeline.timerResume(t1);
+    std::this_thread::sleep_for(3s);
 
     return 0;
 }
