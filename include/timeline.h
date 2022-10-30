@@ -46,6 +46,8 @@ class Timeline final
      */
     explicit Timeline(std::vector<std::string> const &elements,
                       std::function<void(TimerState const &)> timersEvent);
+    Timeline(Timeline &&) noexcept = default;
+
     ~Timeline();
 
     /**

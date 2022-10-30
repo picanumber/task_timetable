@@ -35,11 +35,12 @@ constexpr char kNonCallableEntity[] = "No action associated with the entity";
 std::vector<std::string> split(std::string const &input, char delim)
 {
     thread_local std::stringstream ss;
+
+    ss.clear(); // Clear error state - invocations stop with eofbit.
     ss.str(input);
 
-    std::vector<std::string> ret;
-
     std::string item;
+    std::vector<std::string> ret;
     while (std::getline(ss, item, delim))
     {
         ret.emplace_back(std::move(item));
