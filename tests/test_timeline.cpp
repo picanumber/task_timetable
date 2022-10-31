@@ -52,7 +52,7 @@ TEST_CASE("Construction")
     CHECK_THROWS_AS(Timeline schedule({""}, DummyTimerAction);, std::exception);
 }
 
-TEST_CASE("Single timer")
+TEST_CASE("Expiring timer")
 {
     Timeline schedule;
 
@@ -62,7 +62,7 @@ TEST_CASE("Single timer")
         return ttt::Result::Repeat;
     };
 
-    REQUIRE_MESSAGE(schedule.timerAdd("t1", 10ms, 100ms, 0, timerAction),
+    REQUIRE_MESSAGE(schedule.timerAdd("t1", 10ms, 100ms, false, timerAction),
                     "Unable to add timer");
 
     auto start = test::now();
@@ -72,11 +72,11 @@ TEST_CASE("Single timer")
     }
 
     REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
-    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
-    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
+    REQUIRE_MESSAGE(callCount == 10, "Further calls should be impossible");
+    REQUIRE_MESSAGE(callCount == 10, "Further calls should be impossible");
 }
 
-TEST_CASE("ttgff timer")
+TEST_CASE("Repeating timer")
 {
     Timeline schedule;
 
@@ -86,16 +86,52 @@ TEST_CASE("ttgff timer")
         return ttt::Result::Repeat;
     };
 
-    REQUIRE_MESSAGE(schedule.timerAdd("t1", 10ms, 100ms, 0, timerAction),
+    REQUIRE_MESSAGE(schedule.timerAdd("t1", 10ms, 100ms, true, timerAction),
                     "Unable to add timer");
 
     auto start = test::now();
-    while (callCount < 10)
+    while (callCount < 11)
     {
         CHECK_MESSAGE(test::delta(start) < 5s, "Timer not ticking in tempo");
     }
 
-    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
-    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
-    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
+    REQUIRE_MESSAGE(callCount >= 11, "Wrong number of iterations");
+    REQUIRE_MESSAGE(callCount >= 11, "Further calls should be possible");
+    REQUIRE_MESSAGE(callCount >= 11, "Further calls should be possible");
+}
+
+TEST_CASE("Two timers")
+{
+    Timeline schedule;
+
+    std::atomic_size_t sum{0}, c1{0}, c2{0};
+
+    auto t1 = [&sum, &c1](TimerState const &) {
+        ++sum;
+        ++c1;
+        return ttt::Result::Repeat;
+    };
+    auto t2 = [&sum, &c2](TimerState const &) {
+        ++sum;
+        ++c2;
+        return ttt::Result::Repeat;
+    };
+
+    REQUIRE_MESSAGE(schedule.timerAdd("t1", 10ms, 100ms, false, t1),
+                    "Unable to add timer 1");
+    REQUIRE_MESSAGE(schedule.timerAdd("t2", 10ms, 100ms, false, t2),
+                    "Unable to add timer 2");
+
+    auto start = test::now();
+    while (sum < 20)
+    {
+        CHECK_MESSAGE(test::delta(start) < 5s, "Timer not ticking in tempo");
+    }
+
+    REQUIRE_MESSAGE(sum == 20, "Wrong number of iterations");
+
+    REQUIRE_MESSAGE(c1 == 10, "Wrong number of iterations");
+    REQUIRE_MESSAGE(c2 == 10, "Wrong number of iterations");
+
+    REQUIRE_MESSAGE(sum == 20, "Further calls should be impossible");
 }
