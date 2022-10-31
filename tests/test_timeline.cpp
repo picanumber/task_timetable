@@ -1,14 +1,19 @@
 // © 2022 Nikolaos Athanasiou, github.com/picanumber
 #include "doctest/doctest.h"
+#include "scheduler.h"
 #include "test_utils.h"
 #include "timeline.h"
 
+#include <atomic>
+#include <chrono>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 using ttt::Timeline;
 using ttt::TimerState;
+
+using namespace std::chrono_literals;
 
 static void DummyTimerAction(TimerState const &)
 {
@@ -40,8 +45,57 @@ TEST_CASE("Construction")
                       (ent + ": Entity improperly serialized"));
     }
 
-    CHECK_THROWS_AS(
-        ttt::Timeline schedule(
-            {"junk:string:that:does:not:designate:timeline:entry"}, {});
-        , std::runtime_error);
+    CHECK_THROWS_AS(Timeline schedule(
+                        {"junk:string:that:does:not:designate:timeline:entry"},
+                        DummyTimerAction);
+                    , std::runtime_error);
+    CHECK_THROWS_AS(Timeline schedule({""}, DummyTimerAction);, std::exception);
+}
+
+TEST_CASE("Single timer")
+{
+    Timeline schedule;
+
+    std::atomic_size_t callCount{0};
+    auto timerAction = [&callCount](TimerState const &) {
+        ++callCount;
+        return ttt::Result::Repeat;
+    };
+
+    REQUIRE_MESSAGE(schedule.timerAdd("t1", 10ms, 100ms, 0, timerAction),
+                    "Unable to add timer");
+
+    auto start = test::now();
+    while (callCount < 10)
+    {
+        CHECK_MESSAGE(test::delta(start) < 5s, "Timer not ticking in tempo");
+    }
+
+    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
+    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
+    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
+}
+
+TEST_CASE("ttgff timer")
+{
+    Timeline schedule;
+
+    std::atomic_size_t callCount{0};
+    auto timerAction = [&callCount](TimerState const &) {
+        ++callCount;
+        return ttt::Result::Repeat;
+    };
+
+    REQUIRE_MESSAGE(schedule.timerAdd("t1", 10ms, 100ms, 0, timerAction),
+                    "Unable to add timer");
+
+    auto start = test::now();
+    while (callCount < 10)
+    {
+        CHECK_MESSAGE(test::delta(start) < 5s, "Timer not ticking in tempo");
+    }
+
+    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
+    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
+    REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
 }
