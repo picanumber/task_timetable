@@ -24,7 +24,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
 
     if (timeline.timerAdd(
             t1, 500ms, 3'000ms, true, [](ttt::TimerState const &s) {
-                std::cout << s.name << "> " << s.remaining.count() << "/"
+                std::cout << s.name << "> " << s.remaining.load().count() << "/"
                           << s.duration.count() << std::endl;
             }))
     {

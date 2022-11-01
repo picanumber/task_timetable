@@ -3,6 +3,7 @@
 
 #include "scheduler.h"
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <string>
@@ -22,7 +23,7 @@ struct TimerState
     const std::string name;
     const std::chrono::milliseconds resolution;
     const std::chrono::milliseconds duration;
-    std::chrono::milliseconds remaining;
+    std::atomic<std::chrono::milliseconds> remaining;
     const bool repeating;
 };
 

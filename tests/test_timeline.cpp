@@ -22,10 +22,10 @@ static void DummyTimerAction(TimerState const &)
 TEST_CASE("Construction")
 {
     std::vector<std::string> entityStrings{
-        "timer:t4:100:500:500:1",
-        "timer:t3:100:500:500:0",
-        "timer:t1:1000:10000:10000:1",
-        "timer:t2:1000:10000:10000:0",
+        "timer:t4:100:500:500:1:1",
+        "timer:t3:100:500:500:0:1",
+        "timer:t1:1000:10000:10000:1:1",
+        "timer:t2:1000:10000:10000:0:1",
     };
 
     CHECK_NOTHROW(Timeline schedule);

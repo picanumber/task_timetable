@@ -93,12 +93,14 @@ class TimerEntity
     }
     TimerEntity(std::vector<std::string> const &args)
         : TimerEntity(args.at(1), millis_from(args.at(2)),
-                      millis_from(args.at(3)), args.at(5) == "1" ? true : false)
+                      millis_from(args.at(3)), millis_from(args.at(4)),
+                      args.at(5) == "1" ? true : false)
     {
     }
     TimerEntity(std::string const &name, std::chrono::milliseconds resolution,
-                std::chrono::milliseconds duration, bool repeating)
-        : _state{name, resolution, duration, duration, repeating}
+                std::chrono::milliseconds duration,
+                std::chrono::milliseconds remaining, bool repeating)
+        : _state{name, resolution, duration, remaining, repeating}
     {
     }
 
@@ -123,7 +125,7 @@ class TimerEntity
     {
         return stich(kElementFieldsDelimiter, kTimerElement, _state.name,
                      to_string(_state.resolution), to_string(_state.duration),
-                     to_string(_state.remaining),
+                     to_string(_state.remaining.load()),
                      (_state.repeating ? "1" : "0"));
     }
 
@@ -132,16 +134,16 @@ class TimerEntity
     {
         bool ret = true;
 
-        if (0 == _state.remaining.count())
+        if (0 == _state.remaining.load().count())
         {
             throw std::runtime_error(kInvalidTimerCountdown);
         }
         else
         {
-            _state.remaining -= _state.resolution;
+            _state.remaining.store(_state.remaining.load() - _state.resolution);
         }
 
-        if (0 == _state.remaining.count())
+        if (0 == _state.remaining.load().count())
         {
             if (_state.repeating)
             {
@@ -204,7 +206,11 @@ class TimelineImpl
                     true == ok)
                 {
                     it->second.entity->setAction(timersEvent);
-                    it->second.token.emplace(scheduleTimer(it->second.entity));
+                    if ("1" == fields.at(6))
+                    {
+                        it->second.token.emplace(
+                            scheduleTimer(it->second.entity));
+                    }
                 }
             }
             else if (entityType == kPulseElement)
@@ -231,7 +237,9 @@ class TimelineImpl
 
         for (auto const &[name, timerEntry] : _timers)
         {
-            ret.push_back(timerEntry.entity->toString());
+            ret.emplace_back(timerEntry.entity->toString() +
+                             kElementFieldsDelimiter +
+                             (timerEntry.token.has_value() ? "1" : "0"));
         }
 
         // TODO: Same for pulses and alarms
@@ -244,8 +252,8 @@ class TimelineImpl
                   std::function<void(TimerState const &)> onTick)
     {
         std::lock_guard<std::mutex> lock(_mtx);
-        auto [it, ok] =
-            _timers.try_emplace(name, name, resolution, duration, repeating);
+        auto [it, ok] = _timers.try_emplace(name, name, resolution, duration,
+                                            duration, repeating);
 
         if (ok)
         {
