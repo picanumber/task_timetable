@@ -68,7 +68,10 @@ TEST_CASE("Expiring timer")
     auto start = test::now();
     while (callCount < 10)
     {
-        CHECK_MESSAGE(test::delta(start) < 5s, "Timer not ticking in tempo");
+        if (test::delta(start) > 5s)
+        {
+            FAILED_REQUIREMENT("Timer not ticking in tempo");
+        }
     }
 
     REQUIRE_MESSAGE(callCount == 10, "Wrong number of iterations");
@@ -92,7 +95,10 @@ TEST_CASE("Repeating timer")
     auto start = test::now();
     while (callCount < 11)
     {
-        CHECK_MESSAGE(test::delta(start) < 5s, "Timer not ticking in tempo");
+        if (test::delta(start) > 5s)
+        {
+            FAILED_REQUIREMENT("Timer not ticking in tempo");
+        }
     }
 
     REQUIRE_MESSAGE(callCount >= 11, "Wrong number of iterations");
@@ -125,7 +131,10 @@ TEST_CASE("Two timers")
     auto start = test::now();
     while (sum < 20)
     {
-        CHECK_MESSAGE(test::delta(start) < 5s, "Timer not ticking in tempo");
+        if (test::delta(start) > 5s)
+        {
+            FAILED_REQUIREMENT("Timer not ticking in tempo");
+        }
     }
 
     REQUIRE_MESSAGE(sum == 20, "Wrong number of iterations");
