@@ -1,5 +1,5 @@
-# C++ task chrono-scheduler
-##### Defer tasks for execution or repetition at specified intervals.
+# C++ chrono-scheduler
+#### Defer tasks for execution or repetition at specified intervals.
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 [![](https://tokei.rs/b1/github/picanumber/task_timetable)](https://github.com/XAMPPRocky/tokei)
@@ -80,11 +80,36 @@ auto token = std::optional(plan.add(myTask, 500ms, false));
 token.reset(); // Triggers the token's destructor which cancels task execution.
 ```
 
-### Utilities
+### Timeline
 
-The library is shipped with various classes that cover common scenarios.
+The timeline class is a container of chrono-restricted tasks. Different flavors of tasks that can be defined include:
 
-#### Timeline
+* __Timers__ : repeatable with stateful countdown
+* __Pulses__ : repeatable with period state
+* __Alarms__ : one-off task with interval state e.g. a deferred notification.
+
+Usage is documented in the respective header (`timeline.h`), but essentially each task type has methods to be added, removed, stopped and so on, as seen in the following example.
+
+```cpp
+ttt::Timeline schedule;
+
+std::string const name("timer1");
+schedule.timerAdd(
+    name,                     // Timer name.     
+    100ms,                    // Resolution (frequency of timer ticks)
+    1s,                       // Duration - what we count down from
+    false,                    // Countdown again, after running a duration cycle
+    [](TimerState const& s) { // Invoked on every resolution step
+        std::cout << s.remaining.count() << "ms out of " << s.duration.count() << "ms\n"; 
+    },
+    true // Trigger the timer upon addition - Callback invoked with remaining=duration
+);
+
+auto serializedState = schedule.serialize(true, true, true);
+// what to serialize, i.e.          timers^  pulses^  ^alarms
+
+ttt::Timeline tl2(serializedState); // Recreation of a timeline from serialized state.
+```
 
 ## Building
 

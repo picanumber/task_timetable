@@ -36,17 +36,22 @@ std::string StateStringFrom(std::string const &key, std::string const &value);
 /**
  * @brief Container of tasks.
  *
- * @details Enables users to register with:
- * - Predefined scheduling policies
+ * @details Enables users to register tasks:
+ * - With predefined scheduling policies:
  *   - timers : repeatable with stateful countdown e.g. hourglass timer.
  *   - pulses : repeatable with period state e.g. a heartbeat.
  *   - alarms : one-off task with interval state e.g. a deferred notification.
+ * - That are serialization aware.
+ * - Loadable from serialized state.
  */
 class Timeline final
 {
     std::unique_ptr<TimelineImpl> _impl;
 
   public:
+    /**
+     * @brief Default constructed (empty) timeline.
+     */
     Timeline();
     /**
      * @brief Construct a timeline out of serialized information. Entities
@@ -58,8 +63,12 @@ class Timeline final
      */
     explicit Timeline(std::vector<std::string> const &elements,
                       std::function<void(TimerState const &)> timersEvent);
+    /**
+     * @brief Move constructor.
+     *
+     * @param Timeline to steal content from.
+     */
     Timeline(Timeline &&) noexcept = default;
-
     /**
      * @brief Destructor defined out of line, because of incomplete types.
      */
@@ -86,7 +95,9 @@ class Timeline final
      * @param duration Total execution time for the timer.
      * @param repeating Whether to count from the top when reaching zero.
      * @param onTick Callback to execute on invocation of the timer.
-     * @param tickNow Immediately trigger the timer with remaining=duration.
+     * @param tickNow Immediately trigger the timer:
+     *  - true : In the first call "remaining=duration".
+     *  - false: First call with "remaining=duration-resolution".
      *
      * @return Whether the timer was added.
      */
