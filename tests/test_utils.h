@@ -2,6 +2,7 @@
 #pragma once
 
 #include <chrono>
+#include <string>
 
 namespace test
 {
@@ -26,5 +27,8 @@ auto delta(T const &start, T const &end)
 {
     return std::chrono::duration_cast<D>(end - start);
 }
+
+#define FAILED_REQUIREMENT(msg)                                                \
+    REQUIRE_MESSAGE(false == true, (std::string("Requirement failed: ") + msg))
 
 } // namespace test

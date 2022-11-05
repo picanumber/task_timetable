@@ -107,8 +107,8 @@ TEST_CASE("Detached task tokens")
 
         while (reps != callCount.load())
         {
-            WARN_MESSAGE(test::delta(start) < tol, "Tasks not executed");
         }
+        WARN_MESSAGE(test::delta(start) < tol, "Tasks not executed in time");
     }
 
     {
@@ -121,8 +121,8 @@ TEST_CASE("Detached task tokens")
 
         while (reps != callCount.load())
         {
-            WARN_MESSAGE(test::delta(start) < tol, "Tasks not executed");
         }
+        WARN_MESSAGE(test::delta(start) < tol, "Tasks not executed in time");
     }
 
     ttt::CallScheduler plan2(true, 2);
@@ -136,8 +136,8 @@ TEST_CASE("Detached task tokens")
 
         while (reps != callCount.load())
         {
-            WARN_MESSAGE(test::delta(start) < tol, "Tasks not executed");
         }
+        WARN_MESSAGE(test::delta(start) < tol, "Tasks not executed in time");
     }
 
     {
@@ -150,8 +150,8 @@ TEST_CASE("Detached task tokens")
 
         while (reps != callCount.load())
         {
-            WARN_MESSAGE(test::delta(start) < tol, "Tasks not executed");
         }
+        WARN_MESSAGE(test::delta(start) < tol, "Tasks not executed in time");
     }
 }
 #endif

@@ -86,7 +86,7 @@ class CallToken
  * A scheduler drops all unfinished tasks upon destruction, since repeating
  * tasks would prevent destruction otherwise.
  */
-class CallScheduler
+class CallScheduler final
 {
     using execution_time_point_t = std::chrono::steady_clock::time_point;
     using task_map_t = std::multimap<execution_time_point_t, detail::Task>;
