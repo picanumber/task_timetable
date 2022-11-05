@@ -300,7 +300,7 @@ TEST_CASE("Timer: Pause-Resume")
     std::atomic_size_t callCount{0};
     std::atomic_bool pauseCalled{false};
 
-    auto timerAction = [&callCount, remainingMsWhenPaused = 0,
+    auto timerAction = [&callCount, remainingMsWhenPaused = 0L,
                         &pauseCalled](TimerState const &s) mutable {
         if (0 == callCount)
         {
