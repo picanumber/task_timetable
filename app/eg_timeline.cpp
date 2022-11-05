@@ -22,11 +22,19 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
     std::string t1("t1");
     ttt::Timeline timeline;
 
+    bool tickOnAdd = false;
+    if (argc > 1)
+    {
+        tickOnAdd = !!std::stoul(argv[1]);
+    }
+
     if (timeline.timerAdd(
-            t1, 500ms, 3'000ms, true, [](ttt::TimerState const &s) {
+            t1, 500ms, 3'000ms, true,
+            [](ttt::TimerState const &s) {
                 std::cout << s.name << "> " << s.remaining.load().count() << "/"
                           << s.duration.count() << std::endl;
-            }))
+            },
+            tickOnAdd))
     {
         std::this_thread::sleep_for(5s);
     }

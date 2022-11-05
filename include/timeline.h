@@ -30,9 +30,18 @@ struct TimerState
 // Split a state string into key and value.
 std::pair<std::string, std::string> KeyValueFrom(std::string const &stateStr);
 
-// Stich a key-value pair into a state string.
+// Stitch a key-value pair into a state string.
 std::string StateStringFrom(std::string const &key, std::string const &value);
 
+/**
+ * @brief Container of tasks.
+ *
+ * @details Enables users to register with:
+ * - Predefined scheduling policies
+ *   - timers : repeatable with stateful countdown e.g. hourglass timer.
+ *   - pulses : repeatable with period state e.g. a heartbeat.
+ *   - alarms : one-off task with interval state e.g. a deferred notification.
+ */
 class Timeline final
 {
     std::unique_ptr<TimelineImpl> _impl;
@@ -40,7 +49,9 @@ class Timeline final
   public:
     Timeline();
     /**
-     * @brief Construct a timeline out of serialized information.
+     * @brief Construct a timeline out of serialized information. Entities
+     * contained in the serialized string will be added to the internal
+     * scheduler according to their properties.
      *
      * @param elements All entities as state strings.
      * @param timersEvent Callback that applies to timer events.
@@ -49,15 +60,23 @@ class Timeline final
                       std::function<void(TimerState const &)> timersEvent);
     Timeline(Timeline &&) noexcept = default;
 
+    /**
+     * @brief Destructor defined out of line, because of incomplete types.
+     */
     ~Timeline();
 
     /**
      * @brief String representation of the state of all entities.
      *
+     * @param timers : whether to include the entity to the serialization.
+     * @param pulses : whether to include the entity to the serialization.
+     * @param alarms : whether to include the entity to the serialization.
+     *
      * @return Collection of strings containing all state, apart from the
      * attached callbacks.
      */
-    std::vector<std::string> serialize() const;
+    std::vector<std::string> serialize(bool timers, bool pulses,
+                                       bool alarms) const;
 
     /**
      * @brief Add a timer to the timeline.
@@ -67,12 +86,13 @@ class Timeline final
      * @param duration Total execution time for the timer.
      * @param repeating Whether to count from the top when reaching zero.
      * @param onTick Callback to execute on invocation of the timer.
+     * @param tickNow Immediately trigger the timer with remaining=duration.
      *
      * @return Whether the timer was added.
      */
     bool timerAdd(std::string const &name, std::chrono::milliseconds resolution,
                   std::chrono::milliseconds duration, bool repeating,
-                  std::function<void(TimerState const &)> onTick);
+                  std::function<void(TimerState const &)> onTick, bool tickNow);
     /**
      * @brief Remove the specified timer.
      *

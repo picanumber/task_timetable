@@ -16,6 +16,8 @@
 #include <concepts>
 #endif
 
+using namespace std::chrono_literals;
+
 namespace
 {
 
@@ -147,7 +149,7 @@ class TimerEntity
         {
             if (_state.repeating)
             {
-                reset(); // Repeating clocks re-start from "duration".
+                reset(false); // Repeating clocks re-start from "duration".
             }
             ret = _state.repeating;
         }
@@ -155,9 +157,10 @@ class TimerEntity
         return ret;
     }
 
-    void reset()
+    void reset(bool addStep)
     {
-        _state.remaining = _state.duration;
+        _state.remaining =
+            _state.duration + (addStep ? _state.resolution : 0ms);
     }
 
     ttt::TimerState const &state() const
@@ -209,7 +212,7 @@ class TimelineImpl
                     if ("1" == fields.at(6))
                     {
                         it->second.token.emplace(
-                            scheduleTimer(it->second.entity));
+                            scheduleTimer(it->second.entity, false));
                     }
                 }
             }
@@ -228,37 +231,51 @@ class TimelineImpl
         }
     }
 
-    std::vector<std::string> serialize() const
+    std::vector<std::string> serialize(bool timers, bool pulses,
+                                       bool alarms) const
     {
         std::lock_guard<std::mutex> lock(_mtx);
 
         std::vector<std::string> ret;
-        ret.reserve(_timers.size() /* + _pulses.size() + _alarms.size() */);
+        ret.reserve((timers ? _timers.size() : 0) + (pulses ? 0 : 0) +
+                    (alarms ? 0 : 0));
 
-        for (auto const &[name, timerEntry] : _timers)
+        if (timers)
         {
-            ret.emplace_back(timerEntry.entity->toString() +
-                             kElementFieldsDelimiter +
-                             (timerEntry.token.has_value() ? "1" : "0"));
+            for (auto const &[name, timerEntry] : _timers)
+            {
+                ret.emplace_back(timerEntry.entity->toString() +
+                                 kElementFieldsDelimiter +
+                                 (timerEntry.token.has_value() ? "1" : "0"));
+            }
         }
 
-        // TODO: Same for pulses and alarms
+        if (pulses)
+        {
+            // TODO: Implementation.
+        }
+
+        if (alarms)
+        {
+            // TODO: Implementation.
+        }
 
         return ret;
     }
 
     bool addTimer(std::string const &name, std::chrono::milliseconds resolution,
                   std::chrono::milliseconds duration, bool repeating,
-                  std::function<void(TimerState const &)> onTick)
+                  std::function<void(TimerState const &)> onTick, bool tickNow)
     {
         std::lock_guard<std::mutex> lock(_mtx);
-        auto [it, ok] = _timers.try_emplace(name, name, resolution, duration,
-                                            duration, repeating);
+        auto [it, ok] = _timers.try_emplace(
+            name, name, resolution, duration,
+            tickNow ? duration + resolution : duration, repeating);
 
         if (ok)
         {
             it->second.entity->setAction(std::move(onTick));
-            it->second.token.emplace(scheduleTimer(it->second.entity));
+            it->second.token.emplace(scheduleTimer(it->second.entity, tickNow));
         }
 
         return ok;
@@ -277,11 +294,11 @@ class TimelineImpl
 
         if (auto it = _timers.find(name); _timers.end() != it)
         {
-            it->second.token.reset();   // Cancel timer ticking.
-            it->second.entity->reset(); // Reset timer state.
+            it->second.token.reset();       // Cancel timer ticking.
+            it->second.entity->reset(true); // Reset timer state.
 
             // Reschedule the timer entity.
-            it->second.token.emplace(scheduleTimer(it->second.entity));
+            it->second.token.emplace(scheduleTimer(it->second.entity, true));
 
             ret = true;
         }
@@ -299,7 +316,7 @@ class TimelineImpl
             it->second.token.reset(); // Cancel timer ticking.
             if (resetState)
             {
-                it->second.entity->reset();
+                it->second.entity->reset(false);
             }
 
             ret = true;
@@ -317,7 +334,7 @@ class TimelineImpl
             _timers.end() != it and it->second.token.has_value() == false)
         {
             // Reschedule the timer entity.
-            it->second.token.emplace(scheduleTimer(it->second.entity));
+            it->second.token.emplace(scheduleTimer(it->second.entity, false));
 
             ret = true;
         }
@@ -327,23 +344,23 @@ class TimelineImpl
 
   private:
     [[nodiscard]] ttt::CallToken scheduleTimer(
-        std::shared_ptr<TimerEntity> &ent)
+        std::shared_ptr<TimerEntity> &ent, bool tickNow)
     {
         auto callback = [observer = std::weak_ptr(ent)] {
-            auto ret = ttt::Result::Repeat;
+            auto ret = ttt::Result::Finished;
             if (auto ptr = observer.lock())
             {
-                if (!ptr->tick())
+                if (ptr->tick()) // Update timer state.
                 {
-                    ret = ttt::Result::Finished;
+                    ret = ttt::Result::Repeat;
                 }
-                (*ptr)();
+                (*ptr)(); // Call associated action.
             }
             return ret;
         };
 
         return _schedule.add(std::move(callback), ent->state().resolution,
-                             false);
+                             tickNow);
     }
 };
 
@@ -384,18 +401,20 @@ Timeline::Timeline(std::vector<std::string> const &elements,
 
 Timeline::~Timeline() = default;
 
-std::vector<std::string> Timeline::serialize() const
+std::vector<std::string> Timeline::serialize(bool timers, bool pulses,
+                                             bool alarms) const
 {
-    return _impl->serialize();
+    return _impl->serialize(timers, pulses, alarms);
 }
 
 bool Timeline::timerAdd(std::string const &name,
                         std::chrono::milliseconds resolution,
                         std::chrono::milliseconds duration, bool repeating,
-                        std::function<void(TimerState const &)> onTick)
+                        std::function<void(TimerState const &)> onTick,
+                        bool tickNow)
 {
     return _impl->addTimer(name, resolution, duration, repeating,
-                           std::move(onTick));
+                           std::move(onTick), tickNow);
 }
 
 bool Timeline::timerRemove(std::string const &name)
