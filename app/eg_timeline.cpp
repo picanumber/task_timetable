@@ -1,6 +1,6 @@
 // © 2022 Nikolaos Athanasiou, github.com/picanumber
 #include "configurations.h"
-#include "timeline.h"
+#include "task_timetable/timeline.h"
 
 #include <chrono>
 #include <iostream>

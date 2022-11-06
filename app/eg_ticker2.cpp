@@ -1,6 +1,6 @@
 // © 2022 Nikolaos Athanasiou, github.com/picanumber
 #include "configurations.h"
-#include "scheduler.h"
+#include "task_timetable/scheduler.h"
 
 #include <chrono>
 #include <iostream>

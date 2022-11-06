@@ -1,8 +1,8 @@
 // © 2022 Nikolaos Athanasiou, github.com/picanumber
 #include "doctest/doctest.h"
-#include "scheduler.h"
+#include "task_timetable/scheduler.h"
+#include "task_timetable/timeline.h"
 #include "test_utils.h"
-#include "timeline.h"
 
 #include <atomic>
 #include <chrono>
