@@ -48,7 +48,7 @@ find_package(Threads REQUIRED)
 SET(USED_LIBS Threads::Threads)
 
 # Consumer targets.
-add_library(${LIBRARY_NAME} SHARED ${SOURCES})
+add_library(${LIBRARY_NAME} STATIC ${SOURCES})
 target_include_directories(${LIBRARY_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(${LIBRARY_NAME} PUBLIC ${USED_LIBS})
 target_set_warnings(${LIBRARY_NAME} ENABLE ALL AS_ERROR ALL DISABLE Annoying)
@@ -58,6 +58,7 @@ set_target_properties(
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
+        POSITION_INDEPENDENT_CODE ON
 )
 
 # Developer targets.
